@@ -134,6 +134,51 @@
             "name": "<strong>Database Title</strong>:<br>The title of the database, used throughout the EM<br>Default is: <em>Yale University Funded Grant Database</em>",
             "required": false,
             "type": "text"
+        },
+        {
+            "key": "custom-fields",
+            "name": "<strong>Custom Fields</strong>:<br>Select one or more fields from the grants project that should appear in the data table",
+            "required": false,
+            "repeatable": true,
+            "type": "sub_settings",
+            "sub_settings": [
+                {
+                    "key": "field",
+                    "name": "<strong>Field Variable</strong>",
+                    "required": false,
+                    "type": "text"
+                },
+                {
+                    "key": "label",
+                    "name": "<strong>Table Header Label</strong>",
+                    "required": false,
+                    "type": "text"
+                },
+                {
+                    "key": "visible",
+                    "name": "<strong>Field Visibility</strong><br>Should the field be visible in the tables",
+                    "required": false,
+                    "type": "radio",
+                    "choices": [
+                        {
+                            "value": 0,
+                            "name": "Not Visible"
+                        },
+                        {
+                            "value": 1,
+                            "name": "Visible"
+                        }
+                    ]
+                },
+                {
+                    "key": "column-index",
+                    "name": "<strong>Column Index</strong><br>Where should this column be placed?",
+                    "required": false,
+                    "type": "text"
+                }
+                
+                
+            ]
         }
     ],
     "crons": [

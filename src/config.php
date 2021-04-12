@@ -47,6 +47,8 @@ $faviconImage           = is_null($favicon) ? $module->getUrl("img/favicon.ico")
 $databaseTitle          = is_null($databaseTitle) ? "Yale University Funded Grant Database" : $databaseTitle;
 
 
+// Get Custom Fields
+$customFields           = getSystemSubSettings();
 
 function checkPID($pid, $label) {
     global $module;
@@ -79,4 +81,19 @@ function getFile($edocId) {
     $result = $module->query('SELECT stored_name FROM redcap_edocs_metadata WHERE doc_id = ?', $edocId);
     $filename = $result->fetch_assoc()["stored_name"];
     return APP_PATH_WEBROOT_FULL."edocs/".$filename;
+}
+
+function getSystemSubSettings() {
+    global $module;
+    $result = array();
+    $subSettings = array('field', 'label', 'visible', 'column-index');
+    $fields = $module->getSystemSetting('field');
+
+    foreach ($subSettings as $subSetting) {
+        $subSettingResults = $module->getSystemSetting($subSetting);
+        foreach ($subSettingResults as $key=>$subSettingResult) {
+            $result[$key][$subSetting] = $subSettingResult;
+        }
+    }
+    return $result;
 }
