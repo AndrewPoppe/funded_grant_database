@@ -9,11 +9,12 @@ if (!isset($_COOKIE['grant_repo'])) {
 
 require_once("base.php");
 
-$dieMssg = "Improper filename ".APP_PATH_TEMP.$_GET['f'];
+$filename = $module->getSafePath($_GET['f'], APP_PATH_TEMP);
+$dieMssg = "Improper filename ".$filename;
 if (!isset($_GET['f']) || preg_match("/\.\./", $_GET['f']) || preg_match("/^\//", $_GET['f'])) {
 	die($dieMssg);
 }
-$filename = APP_PATH_TEMP.$_GET['f'];
+
 if (!file_exists($filename)) {
 	die($dieMssg);
 }
