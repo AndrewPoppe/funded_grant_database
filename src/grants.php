@@ -54,6 +54,27 @@ $awardOptions = getAllChoices($choices, array_keys($awards));
 
 // get award option values
 $awardOptionValues = combineValues($grants, array_keys($awards));
+
+// get column orders
+$defaultColumns = array(
+	array("label"=>"PI", 			"field"=>"grants_pi", "default"=>true, "data"=>"pi"),
+	array("label"=>"Grant Title", 	"field"=>"grants_title", "default"=>true,"data"=>"title"),
+	array("label"=>"Award Type", 	"field"=>"grants_type", "visible"=>false, "default"=>true, "data"=>"awardType"),
+	array("label"=>"Award Option", 	"field"=>"award_option_value", "default"=>true, "visible"=>false, "data"=>"awardOption","type"=>"awardOption"),
+	array("label"=>"Grant Date", 	"field"=>"grants_date", "default"=>true, "data"=>"date"),
+	array("label"=>"Grant", 		"field"=>"grants_number", "default"=>true, "data"=>"number"),
+	array("label"=>"Department", 	"field"=>"grants_department", "visible"=>false, "default"=>true, "data"=>"department"),
+	array("label"=>"Acquire", 		"field"=>"download", "default"=>true, "searchable"=>false, "data"=>"acquire"),
+	array("label"=>"Thesaurus", 	"field"=>"grants_thesaurus", "visible"=>false, "default"=>true, "data"=>"thesaurus")
+);
+$columnOrders = getColumnOrders($customFields, $defaultColumns);
+ksort($columnOrders);
+
+
+// NEED TO CHANGE 0/1 in CUSTOM COLUMNS TO BE true/false so that visibility will work correctly
+
+
+
 ?>
 
 <html>
@@ -102,36 +123,31 @@ $awardOptionValues = combineValues($grants, array_keys($awards));
 				<table id="grantsTable" class="dataTable">
 				<thead>
 					<tr>
-						<th>PI</th>
-						<th>Grant Title</th>
-						<th>NIH Format</th>
-						<th>Award Type</th>
-						<th>Award Option</th>
-						<th style="width: 150px;">Grant Date</th>
-						<th>Grant #</th>
-						<th>Department</th>
-						<th>Acquire</th>
-						<th>Thesaurus</th>
+						<?php
+							foreach ($columnOrders as $column) {
+								echo "<th>".$column["label"]."</th>";
+							}
+						?>
 					</tr>
 				</thead>
 				<tbody>
 					<?php
 					foreach ($grants as $id=>$row) {
+						
 						$url = $module->getUrl("src/download.php?p=$grantsProjectId&id=" .
 							$row['grants_file'] . "&s=&page=register_grants&record=" . $row['record_id'] . "&event_id=" .
 							$eventId . "&field_name=grants_file");
+						$row['download'] = "<a href='".\REDCap::escapeHtml($url)."'>Download</a>";
+						$row['award_option_value'] = $awardOptionValues[$id];
 
 						echo "<tr>";
-							echo "<td style='white-space:nowrap;'>" . \REDCap::escapeHtml($row['grants_pi']) . "</td>";				// 0 - PI
-							echo "<td>" . \REDCap::escapeHtml($row['grants_title']) . "</td>";										// 1 - Title
-							echo "<td style='text-align: center;'></td>";															// 2 - NIH Format
-							echo "<td style='text-align: center;'>" . \REDCap::escapeHtml($row['grants_type']) . "</td>";			// 3 - Award Type
-							echo "<td style='text-align: center;'>" . \REDCap::escapeHtml($awardOptionValues[$id]) . "</td>";		// 4 - Award Option
-							echo "<td style='text-align: center;'>" . \REDCap::escapeHtml($row['grants_date']) ."</td>";			// 5 - Grant Date
-							echo "<td style='text-align: center;'>" . \REDCap::escapeHtml($row['grants_number']) . "</td>";			// 6 - Grant Number
-							echo "<td style='text-align: center;'>" . \REDCap::escapeHtml($row['grants_department']) . "</td>";		// 7 - Department
-							echo "<td style='text-align: center;'><a href='".\REDCap::escapeHtml($url)."'>Download</a></td>";		// 8 - Acquire
-							echo "<td style='text-align: center;'>" . \REDCap::escapeHtml($row["grants_thesaurus"]) . "</td>";		// 9 - Thesaurus (keywords)
+							foreach ($columnOrders as $column) {
+								if ($column["field"] == "download") {
+									echo "<td style='text-align: center;'>".$row[$column["field"]]."</th>";
+								} else {
+									echo "<td style='text-align: center;'>".\REDCap::escapeHtml($row[$column["field"]])."</th>";
+								}
+							}
 						echo "</tr>";
 					}
 					?>
@@ -167,42 +183,39 @@ $awardOptionValues = combineValues($grants, array_keys($awards));
 			let awardOptionsCombined = awardOptionValues.reduce((acc, val)=> acc+val, "");
 			let awardOptionDropdownValues = awardOptions.filter(option => awardOptionsCombined.includes(`--${option}--`));
 
-
+			let columns = <?php
+				echo '[';
+				foreach ($columnOrders as $column) {
+					echo '{';
+					if (!isset($column['data'])) {
+						echo '"data":"'.$column["field"].'-custom",';
+					}
+					foreach ($column as $field=>$value) {
+						echo '"'.$field.'": "'.$value.'",';
+					}
+					echo '},';
+				}
+				echo ']';
+			?>;
+			columns = columns.map(function(column) {
+				if (column.field === "award_option_value") {
+					column.render = function(data,type,row) {if (type === 'display') {return data.replace(/--/g, ', ').replace(/^(, )(, )*|(, )*(, )$/g, '');}return data;};
+				}
+				if (column.visible === "" || column.visible === "false" || column.visible == 0) {
+					column.visible = false;
+				} else {
+					column.visible = true;
+				}
+				return column;
+			});
+				
 			$(document).ready( function () {
 				$('#grantsTable').DataTable({
 					
 					
-					columns: [
-						{"data": "pi"},
-						{"data": "title"},
-						{"data": "format", "visible": false},
-						{"data": "awardType", "visible": false},
-						{"data": "awardOption", 
-							"visible": false, 
-							"type": "awardOption", 
-							"render": function(data,type,row) {
-								if (type === 'display') {
-									return data.replace(/--/g, ', ').replace(/^(, )(, )*|(, )*(, )$/g, '');
-								}
-								return data;
-							} 
-						},
-						{"data": "date"},
-						{"data": "number"},
-						{"data": "department", "visible": false},
-						{"data": "acquire", "searchable": false},
-						{"data": "thesaurus", "visible": false}
-					],
-					columnDefs: [
-						{
-							searchPanes: {
-								show: true
-							},
-							targets: [0,1,3]
-						}
-					],
-					pageLength: 1000,
-					dom: 'Bfrtip',
+					columns: columns,
+					//pageLength: 1000,
+					dom: 'lBfrtip',
 					buttons: [
 						{
 							extend: 'searchPanes',
@@ -248,10 +261,7 @@ $awardOptionValues = combineValues($grants, array_keys($awards));
 								}
 							}
 						},
-						{ 
-							extend: 'colvis',
-							exportOptions: { columns: ':visible' }
-						},
+						'colvis',
 						{
 							extend: 'csv',
 							exportOptions: { columns: ':visible' }

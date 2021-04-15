@@ -182,7 +182,7 @@
                 },
                 {
                     "key": "column-index",
-                    "name": "<strong>Column Index</strong><br>Where should this column be placed?",
+                    "name": "<strong>Column Index</strong><br>Where should this column be placed? (0=first column, numbers greater than the number of columns in the table will be placed at the end)",
                     "required": false,
                     "type": "text"
                 }

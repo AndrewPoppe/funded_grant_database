@@ -142,7 +142,7 @@ function getBrightness($hexCode) {
 
 function verifyProjectMetadata($projectFields, $fieldsToTest) {
 	foreach ($fieldsToTest as $testField) {
-		if (!in_array($testField, $projectFields)) return false;
+		if (!in_array($testField, $projectFields, true)) return false;
 	}
 	return true;
 }
