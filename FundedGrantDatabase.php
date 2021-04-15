@@ -72,14 +72,14 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
     /**
      * Grabs user info for a user id
      * @param string $user_id The id of the user
-     * @return array array with first_name, last_name, and email_address 
+     * @return array array with first_name, last_name, user_role, and email_address 
      */
     function get_user_info($user_id, $userProjectId) {
         return json_decode(\REDCap::getData(array(
             "project_id"=>$userProjectId, 
             "return_format"=>"json",
             "records"=>$user_id,
-            "fields"=>array("first_name", "last_name", "email_address")
+            "fields"=>array("first_name", "last_name", "email_address", "user_role")
         )), true)[0];
     }
 
@@ -119,6 +119,9 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
 
             // get user info
             $user = $this->get_user_info($user_id, $userProjectId);
+
+            // don't bother admins with emails
+            if ($user["user_role"] == 3) continue;
             
             // create download table
             $table = "<table><tr><th>Time</th><th>Grant Number</th><th>Grant Title</th><th>PI</th></tr>";
