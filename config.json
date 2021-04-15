@@ -136,11 +136,21 @@
             "type": "text"
         },
         {
+            "key": "use-custom-fields",
+            "name": "<strong>Use Custom Fields:</strong><br>",
+            "required": false,
+            "type": "checkbox"
+        },
+        {
             "key": "custom-fields",
             "name": "<strong>Custom Fields</strong>:<br>Select one or more fields from the grants project that should appear in the data table",
             "required": false,
             "repeatable": true,
             "type": "sub_settings",
+            "branchingLogic": {
+                "field": "use-custom-fields",
+                "value": 1
+            },
             "sub_settings": [
                 {
                     "key": "field",
