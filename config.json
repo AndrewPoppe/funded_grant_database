@@ -16,7 +16,7 @@
             {
                 "name":"Funded Grant Database",
                 "icon": "fas fa-database",
-                "url": "src/index.php"
+                "url": "src/grants.php"
             }
         ]
     },
