@@ -5,8 +5,8 @@
 namespace YaleREDCap\FundedGrantDatabase;
 
 class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
-    
 
+    
     /*********************************************\
      * THIS SECTION DEALS WITH EMAILING USERS    *
      * WHEN THEY HAVE DOWNLOADED GRANT DOCUMENTS *
@@ -33,9 +33,8 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
      * Grabs download information for all grants in the last 24 hours
      * @return array array with one entry per user, containing an array of timestamps and grant ids 
      */
-    function get_todays_downloads() {
-        global $grantsProjectId, $userProjectId;
-        
+    function get_todays_downloads($grantsProjectId, $userProjectId) {
+
         $logEventTable = \REDCap::getLogEventTable($grantsProjectId);
         $downloads = $this->query("SELECT e.ts, e.user, e.pk 
             FROM $logEventTable e 
@@ -75,8 +74,7 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
      * @param string $user_id The id of the user
      * @return array array with first_name, last_name, and email_address 
      */
-    function get_user_info($user_id) {
-        global $userProjectId;
+    function get_user_info($user_id, $userProjectId) {
         return json_decode(\REDCap::getData(array(
             "project_id"=>$userProjectId, 
             "return_format"=>"json",
@@ -102,20 +100,25 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
      * @param array $cronAttributes A copy of the cron's configuration block from config.json.
      */
     function send_download_emails($cronAttributes){
-        global $databaseTitle, $contactName, $contactEmail;
+        $grantsProjectId    = $this->getSystemSetting("grants-project");
+        $userProjectId      = $this->getSystemSetting("users-project");
+        $contactName        = $this->getSystemSetting("contact-name");
+        $contactEmail       = $this->getSystemSetting("contact-email"); 
+        $databaseTitle      = $this->getSystemSetting("database-title");
+        $databaseTitle      = is_null($databaseTitle) ? "Yale University Funded Grant Database" : $databaseTitle;
         
         // Check if emails are enabled in EM
         $settings = $this->get_email_settings();
         if (!$settings["enabled"]) return;
 
         // Get all downloads in the last 24 hours
-        $allDownloads = $this->get_todays_downloads();
+        $allDownloads = $this->get_todays_downloads($grantsProjectId, $userProjectId);
 
         // Loop over users
         foreach ($allDownloads as $user_id=>$userDownloads) {
 
             // get user info
-            $user = $this->get_user_info($user_id);
+            $user = $this->get_user_info($user_id, $userProjectId);
             
             // create download table
             $table = "<table><tr><th>Time</th><th>Grant Number</th><th>Grant Title</th><th>PI</th></tr>";
