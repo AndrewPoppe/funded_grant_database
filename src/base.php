@@ -125,38 +125,18 @@ function adjustBrightness($hexCode, $adjustPercent) {
 
 function getBrightness($hexCode) {
     $hexCode = ltrim($hexCode, '#');
-
     if (strlen($hexCode) == 3) {
         $hexCode = $hexCode[0] . $hexCode[0] . $hexCode[1] . $hexCode[1] . $hexCode[2] . $hexCode[2];
     }
-
     $hexCode = array_map('hexdec', str_split($hexCode, 2));
-
 	$sum = 0;
     foreach ($hexCode as $color) {
         $sum += $color;
     }
-
     return $sum / (255*3);
 }
 
-function verifyProjectMetadata($projectFields, $fieldsToTest) {
-	foreach ($fieldsToTest as $testField) {
-		if (!in_array($testField, $projectFields, true)) return false;
-	}
-	return true;
-}
 
-function getFieldNames($pid) {
-	global $module;
-	$sql = "SELECT field_name FROM redcap_metadata WHERE project_id = ?";
-	$query = $module->query($sql, $pid);
-	$result = array();
-	while ($row = $query->fetch_row()) {
-		array_push($result, $row[0]);
-	}
-	return $result;
-}
 
 // $fieldToTest is a field that appears on the grants instrument
 function getGrantsInstrument($metadata, $fieldToTest) {

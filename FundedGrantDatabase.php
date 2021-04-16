@@ -6,7 +6,149 @@ namespace YaleREDCap\FundedGrantDatabase;
 
 class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
 
+    /**************************\
+     * CONFIGURATION SETTINGS *
+    \**************************/
+
+    public $config = array(
+        "projects"      =>array(),
+        "contact"       =>array(),
+        "emailUsers"    =>array(),
+        "colors"        =>array(),
+        "files"         =>array(),
+        "title"         =>array(),
+        "customFields"  =>array()
+    );
+
+    /**
+     * Get all configuration settings for the module.
+     * @return void
+     */
+    public function get_config() {
+        $this->get_projects();
+        $this->get_contact();
+        
+        var_dump($this->config);
+        die();
+    }
+
+
+    /*************************\
+     * CONFIGURATION METHODS *
+    \*************************/
+
+    /////  PROJECTS  /////
+
+    /**
+     * Get and verify project IDs from system settings.
+     * @return void
+     */
+    private function get_projects() {
+        $grantsProjectId    = $this->getSystemSetting("grants-project");
+        $userProjectId      = $this->getSystemSetting("users-project");
+        $this->checkPID($grantsProjectId, 'Grants Project');
+        $this->checkPID($userProjectId, 'User Project');
+
+        // Make sure grants project has requisite fields
+        $grantTestFields = array('grants_pi', 'grants_title', 'grants_type', 'grants_date', 'grants_number', 'grants_department', 'grants_thesaurus');
+        $grantFields = $this->getFieldNames($grantsProjectId);
+        if (!$this->verifyProjectMetadata($grantFields, $grantTestFields)) {
+            die('The project (PID#'.$grantsProjectId.') is not a valid grants project. Contact your REDCap Administrator.');
+        }
+
+        // Make sure user project has requisite fields
+        $userTestFields = array('user_id', 'user_expiration', 'user_role');
+        $userFields = $this->getFieldNames($userProjectId);
+        if (!$this->verifyProjectMetadata($userFields, $userTestFields)) {
+            die ('The project (PID#'.$userProjectId.') is not a valid users project. Contact your REDCap Administrator.');
+        }
+
+        $this->config["projects"] = array(
+            "grants"=>$grantsProjectId, 
+            "user"=>$userProjectId
+        );
+    }
+
+    /**
+     * Checks whether the provided PID corresponds with an active project.
+     * @param string $pid A PID to test
+     * @param string $label A label to use in error messages if necessary
+     * @return void
+     */
+    private function checkPID($pid, $label) {
+        if (is_null($pid)) die ("A PID must be listed for the ".$label." in the system settings. Contact your REDCap Administrator.");
+        $sql = 'select * from redcap_projects where project_id = ?';
+        $result = $this->query($sql, $pid);
+        $row = $result->fetch_assoc();
+        $error = false;
+        if (is_null($row)) {
+            $error = true;
+            $message = "The project does not exist.";
+        } else if (!empty($row["date_deleted"])) {
+            $error = true;
+            $message = "The project must not be deleted.";
+        } else if (!empty($row["completed_time"])) {
+            $error = true;
+            $message = "The project must not be in Completed status.";
+        } else if ($row["status"] == 2) {
+            $error = true;
+            $message = "The project must not be in Analysis/Cleanup status.";
+        }
+        if ($error) {
+            die ("<strong>There is a problem with PID".$pid." (".$label."):</strong><br>".$message."<br>Contact your REDCap Administrator.");
+        }
+    }
+
+    /**
+     * Make sure project has requisite fields.
+     * @param string[] $projectFields fields in the project
+     * @param string[] $fieldsToTest fields the project should have
+     * @return boolean Whether the project is verified or not
+     */
+    private function verifyProjectMetadata($projectFields, $fieldsToTest) {
+        foreach ($fieldsToTest as $testField) {
+            if (!in_array($testField, $projectFields, true)) return false;
+        }
+        return true;
+    }
     
+    /**
+     * Gets field names from a project
+     * @param string $pid The project's ID
+     * @return string[] field names
+     */
+    private function getFieldNames($pid) {
+        global $module;
+        $sql = "SELECT field_name FROM redcap_metadata WHERE project_id = ?";
+        $query = $module->query($sql, $pid);
+        $result = array();
+        while ($row = $query->fetch_row()) {
+            array_push($result, $row[0]);
+        }
+        return $result;
+    }
+
+
+    /////  CONTACT  /////
+
+    /**
+     * Get contact person info from system settings.
+     * @return void
+     */
+    private function get_contact() {
+        $contactName    = $this->getSystemSetting("contact-name");
+        $contactEmail   = $this->getSystemSetting("contact-email"); 
+        if (is_null($contactName) | is_null($contactEmail)) {
+            die ("The contact person's information must be defined in the EM config. Contact your REDCap Administrator.");
+        }
+        $this->config["contact"] = array(
+            "name"=>$contactName,
+            "email"=>$contactEmail
+        );
+    }
+
+
+
     /*********************************************\
      * THIS SECTION DEALS WITH EMAILING USERS    *
      * WHEN THEY HAVE DOWNLOADED GRANT DOCUMENTS *
