@@ -50,6 +50,16 @@ A complete listing of the configuration options:
 * **Favicon File**: Appears in tab title
 * **Database Title**: The title of the database, used throughout the EM. Default is: *Yale University Funded Grant Database*
 
+### Default Email Body Text
+
+>Hello \[full-name\],  
+>
+>This message is a notification that you have downloaded grant documents from the following grants using the **\[database-title\]**:  
+>
+>\[download-table\]  
+>
+>Questions? Contact \[contact-name\] ([\[contact-email\]]("mailto:\[contact-email\]"))
+
 ## Attribution
 
 This EM is based on a plugin originally created at Vanderbilt by Scott Pearson, Jon Scherdin, and Rebecca Helton (email: datacore at vumc.org). 
