@@ -49,6 +49,12 @@ A complete listing of the configuration options:
 * **Logo File**: Logo to appear on every page of the database
 * **Favicon File**: Appears in tab title
 * **Database Title**: The title of the database, used throughout the EM. Default is: *Yale University Funded Grant Database*
+* **Use Custom Columns**: This allows the REDCap admin to select data columns in the Grants Database REDCap project that will appear in the grants table, allowing flexibility in incorporating additional information about grants
+    * **Custom Fields**: Repeatable set of sub-settings for each custom column
+        * **Field Variable**: the REDCap field variable, without brackets
+        * **Table Header Label**: The text that should appear as the header in the grants table
+        * **Field Visibility**: Whether or not the column should be visible by default - all custom columns are searchable
+        * **Column Index**: The 0-indexed position the custom column should appear. *Note that this refers to the absolute position, not necessarily the apparent position. Meaning, if `5` is given for this value but columns 3 and 4 are hidden, then the custom column will appear as the 4th column (index 3)*
 
 ### Default Email Body Text
 
