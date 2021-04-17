@@ -5,4 +5,3 @@
 
 $module->get_config();
 
-die();
