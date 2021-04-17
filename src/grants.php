@@ -54,7 +54,7 @@ $grants = json_decode(\REDCap::getData(array(
 $awardOptions = $module->getAllChoices($choices, array_keys($awards));
 
 // get award option values
-$awardOptionValues = combineValues($grants, array_keys($awards));
+$awardOptionValues = $module->combineValues($grants, array_keys($awards));
 
 // get column orders
 $defaultColumns = array(
@@ -68,8 +68,9 @@ $defaultColumns = array(
 	array("label"=>"Acquire", 		"field"=>"download", "default"=>true, "searchable"=>false, "data"=>"acquire"),
 	array("label"=>"Thesaurus", 	"field"=>"grants_thesaurus", "visible"=>false, "default"=>true, "data"=>"thesaurus")
 );
-$columnOrders = $module->getColumnOrders($customFields, $defaultColumns);
+$columnOrders = $module->getColumnOrders($module->config["customFields"]["fields"], $defaultColumns);
 ksort($columnOrders);
+
 
 ?>
 

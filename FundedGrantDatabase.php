@@ -775,5 +775,24 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
         }
         return array_unique($result);
     }
-    
+
+ 
+    /**
+     * @param array $data json-decoded array from call to REDCap::getData
+     * @param array $fields fields to combine data from
+     * 
+     * @return string[] array of values, one entry per record in data array
+     */
+    public function combineValues(array $data, array $fields) {
+        $result = array();
+        foreach ($data as $id=>$row) {
+            $values = array();
+            foreach ($fields as $field) {
+                $values[$field] = '--'.implode('--', explode(',', $row[$field])).'--';
+            }
+            $result[$id] = implode('--', array_unique($values));
+        }
+        return $result;
+    }
+
 }
