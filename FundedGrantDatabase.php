@@ -14,14 +14,15 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
     ################################
 
     public $config = array(
-        "projects"      =>array(),
-        "contact"       =>array(),
-        "emailUsers"    =>array(),
-        "colors"        =>array(),
-        "files"         =>array(),
-        "text"          =>array(),
-        "customFields"  =>array()
+        "projects"      => array(),
+        "contact"       => array(),
+        "colors"        => array(),
+        "files"         => array(),
+        "text"          => array(),
+        "emailUsers"    => array(),
+        "customFields"  => array()
     );
+    
 
     /**
      * Get all configuration settings for the module.
@@ -34,8 +35,10 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
         $this->get_file_config();
         $this->get_text_config();
         $this->get_email_config();
+        $this->get_custom_field_config();
         
         var_dump($this->config);
+        var_dump($this->config["customFields"]);
         die();
     }
 
@@ -44,9 +47,9 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
     ###  CONFIGURATION METHODS  ###
     ###############################
 
-    /************\ 
-    |  PROJECTS  |
-    \************/
+    /***************\ 
+    |  PROJECT IDS  |
+    \***************/
 
     /**
      * Get and verify project IDs from system settings.
@@ -57,26 +60,26 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
         $userProjectId      = $this->getSystemSetting("users-project");
         $this->checkPID($grantsProjectId, 'Grants Project');
         $this->checkPID($userProjectId, 'User Project');
+        $this->get_metadata("grants", $grantsProjectId);
+        $this->get_metadata("user", $userProjectId);
 
         // Make sure grants project has requisite fields
         $grantTestFields = array('grants_pi', 'grants_title', 'grants_type', 'grants_date', 'grants_number', 'grants_department', 'grants_thesaurus');
-        $grantFields = $this->getFieldNames($grantsProjectId);
-        if (!$this->verifyProjectMetadata($grantFields, $grantTestFields)) {
+        if (!$this->verifyProjectMetadata($this->config["projects"]["grants"]["metadata"], $grantTestFields)) {
             die('The project (PID#'.$grantsProjectId.') is not a valid grants project. Contact your REDCap Administrator.');
         }
 
+
         // Make sure user project has requisite fields
         $userTestFields = array('user_id', 'user_expiration', 'user_role');
-        $userFields = $this->getFieldNames($userProjectId);
-        if (!$this->verifyProjectMetadata($userFields, $userTestFields)) {
+        if (!$this->verifyProjectMetadata($this->config["projects"]["user"]["metadata"], $userTestFields)) {
             die ('The project (PID#'.$userProjectId.') is not a valid users project. Contact your REDCap Administrator.');
         }
 
-        $this->config["projects"] = array(
-            "grants"=>$grantsProjectId, 
-            "user"=>$userProjectId
-        );
+        $this->config["projects"]["grants"]["projectId"] = $grantsProjectId;
+        $this->config["projects"]["user"]["projectId"]   = $userProjectId;
     }
+
 
     /**
      * Checks whether the provided PID corresponds with an active project.
@@ -110,6 +113,7 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
         }
     }
 
+
     /**
      * Make sure project has requisite fields.
      * 
@@ -125,6 +129,7 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
         return true;
     }
     
+
     /**
      * Gets field names from a project
      * 
@@ -142,6 +147,21 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
         }
         return $result;
     }
+    
+
+    /**
+     * Gets field list for the given project type.
+     * 
+     * This sets the metadata configuration for the given project type.
+     * 
+     * @param string $projectType "grants" or "user"
+     * @param string $projectId the PID for the corresponding type
+     * 
+     * @return void
+     */
+    private function get_metadata(string $projectType, string $projectId) {
+        $this->config["projects"][$projectType]["metadata"] = $this->getFieldNames($projectId);
+    } 
 
 
     /***********\
@@ -196,6 +216,7 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
         );
     }
 
+
     /**
      * Lighten or darken a color by the provided percent.
      * 
@@ -221,6 +242,7 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
         }
         return '#' . implode($hexCode);
     }
+
 
     /**
      * Get how bright the provided color is.
@@ -325,6 +347,67 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
     }
     
 
+    /*****************\
+    |  CUSTOM FIELDS  |
+    \*****************/
+
+    /**
+     * Grab all settings regarding custom fields and put in class config
+     * 
+     * @return void
+     */
+    private function get_custom_field_config() {
+        $customFields           = $this->get_custom_field_subsettings();
+        $customFields["fields"] = $this->check_custom_fields($customFields["fields"]);
+
+        $this->config["customFields"] = $customFields;
+    }
+
+
+    /**
+     * Get subsettings about custom fields
+     * 
+     * @return array[]
+     */
+    private function get_custom_field_subsettings() {
+        $result = array(
+            "enabled" => $this->getSystemSetting('use-custom-fields'),
+            "fields" => array()
+        );
+        if (!$result["enabled"]) return $result;
+        $subSettings = array('field', 'label', 'visible', 'column-index');
+    
+        foreach ($subSettings as $subSetting) {
+            $subSettingResults = $this->getSystemSetting($subSetting);
+            foreach ($subSettingResults as $key=>$subSettingResult) {
+                $result["fields"][$key][$subSetting] = $subSettingResult;
+            }
+        }
+        return $result;
+    }
+
+    
+    /**
+     * Filters custom fields, only returns fields whose names are in grants project metadata
+     * 
+     * @param array $customFields
+     * 
+     * @return array[]
+     */
+    private function check_custom_fields(array $customFields) {
+        $result = array_filter($customFields, function($el) {
+            return in_array($el["field"], $this->config["projects"]["grants"]["metadata"]);
+        });
+        return $result;
+    }
+
+
+    #######################
+    ###  CUSTOM FIELDS  ###
+    #######################
+
+    
+
 
 
     ###################################################
@@ -337,7 +420,7 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
      * Grabs download information for all grants in the last 24 hours
      * @return array array with one entry per user, containing an array of timestamps and grant ids 
      */
-    function get_todays_downloads($grantsProjectId, $userProjectId) {
+    private function get_todays_downloads($grantsProjectId, $userProjectId) {
 
         $logEventTable = \REDCap::getLogEventTable($grantsProjectId);
         $downloads = $this->query("SELECT e.ts, e.user, e.pk 
@@ -373,12 +456,13 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
         return $result;
     }
 
+
     /**
      * Grabs user info for a user id
      * @param string $user_id The id of the user
      * @return array array with first_name, last_name, user_role, and email_address 
      */
-    function get_user_info($user_id, $userProjectId) {
+    private function get_user_info($user_id, $userProjectId) {
         return json_decode(\REDCap::getData(array(
             "project_id"=>$userProjectId, 
             "return_format"=>"json",
@@ -387,12 +471,13 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
         )), true)[0];
     }
 
+
     /**
      * Replaces keywords in the text with values
      * @param array $values assoc array with key = one of (table, first_name, last_name), value = respective value
      * @return string formatted body
      */
-    function formatBody($body, $values) {
+    private function formatBody($body, $values) {
         $values["[full-name]"] = $values["[first-name]"] . " " . $values["[last-name]"];
         foreach ($values as $keyword=>$value) {
             $body = str_replace($keyword, $value, $body);
@@ -400,10 +485,11 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
         return $body;
     }
 
+
     /**
      * @param array $cronAttributes A copy of the cron's configuration block from config.json.
      */
-    function send_download_emails($cronAttributes){
+    public function send_download_emails($cronAttributes){
         $grantsProjectId    = $this->getSystemSetting("grants-project");
         $userProjectId      = $this->getSystemSetting("users-project");
         $contactName        = $this->getSystemSetting("contact-name");

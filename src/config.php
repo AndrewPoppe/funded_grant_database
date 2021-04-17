@@ -2,6 +2,7 @@
 
 /** Author: Andrew Poppe */
 
+
 $module->get_config();
 
 
@@ -10,37 +11,9 @@ $module->get_config();
 
 
 
-// Get Custom Fields
-$customFields           = getSystemSubSettings();
-$customFields           = checkCustomFields($customFields);
 
 
 
-
-
-function getSystemSubSettings() {
-    global $module;
-    $result = array();
-    $enabled = $module->getSystemSetting('use-custom-fields');
-    if (!$enabled) return $result;
-    $subSettings = array('field', 'label', 'visible', 'column-index');
-
-    foreach ($subSettings as $subSetting) {
-        $subSettingResults = $module->getSystemSetting($subSetting);
-        foreach ($subSettingResults as $key=>$subSettingResult) {
-            $result[$key][$subSetting] = $subSettingResult;
-        }
-    }
-    return $result;
-}
-
-function checkCustomFields($customFields) {
-    $result = array_filter($customFields, function($el) {
-        global $grantFields;
-        return in_array($el["field"], $grantFields);
-    });
-    return $result;
-}
 
 function getColumnOrders($customFields, $defaultColumns) {
     $nCustomFields = count($customFields);
