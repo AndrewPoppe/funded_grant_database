@@ -1,14 +1,17 @@
 <?php
 
-/**Author: Andrew Poppe */
-
 namespace YaleREDCap\FundedGrantDatabase;
 
+/**
+ * Main EM class
+ * 
+ * @author Andrew Poppe
+ */
 class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
 
-    /**************************\
-     * CONFIGURATION SETTINGS *
-    \**************************/
+    ################################
+    ###  CONFIGURATION SETTINGS  ###
+    ################################
 
     public $config = array(
         "projects"      =>array(),
@@ -16,7 +19,7 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
         "emailUsers"    =>array(),
         "colors"        =>array(),
         "files"         =>array(),
-        "title"         =>array(),
+        "text"          =>array(),
         "customFields"  =>array()
     );
 
@@ -25,25 +28,31 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
      * @return void
      */
     public function get_config() {
-        $this->get_projects();
-        $this->get_contact();
+        $this->get_project_config();
+        $this->get_contact_config();
+        $this->get_color_config();
+        $this->get_file_config();
+        $this->get_text_config();
+        $this->get_email_config();
         
         var_dump($this->config);
         die();
     }
 
 
-    /*************************\
-     * CONFIGURATION METHODS *
-    \*************************/
+    ###############################
+    ###  CONFIGURATION METHODS  ###
+    ###############################
 
-    /////  PROJECTS  /////
+    /************\ 
+    |  PROJECTS  |
+    \************/
 
     /**
      * Get and verify project IDs from system settings.
      * @return void
      */
-    private function get_projects() {
+    private function get_project_config() {
         $grantsProjectId    = $this->getSystemSetting("grants-project");
         $userProjectId      = $this->getSystemSetting("users-project");
         $this->checkPID($grantsProjectId, 'Grants Project');
@@ -71,11 +80,13 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
 
     /**
      * Checks whether the provided PID corresponds with an active project.
+     * 
      * @param string $pid A PID to test
      * @param string $label A label to use in error messages if necessary
+     * 
      * @return void
      */
-    private function checkPID($pid, $label) {
+    private function checkPID(string $pid, string $label) {
         if (is_null($pid)) die ("A PID must be listed for the ".$label." in the system settings. Contact your REDCap Administrator.");
         $sql = 'select * from redcap_projects where project_id = ?';
         $result = $this->query($sql, $pid);
@@ -101,11 +112,13 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
 
     /**
      * Make sure project has requisite fields.
+     * 
      * @param string[] $projectFields fields in the project
      * @param string[] $fieldsToTest fields the project should have
+     * 
      * @return boolean Whether the project is verified or not
      */
-    private function verifyProjectMetadata($projectFields, $fieldsToTest) {
+    private function verifyProjectMetadata(array $projectFields, array $fieldsToTest) {
         foreach ($fieldsToTest as $testField) {
             if (!in_array($testField, $projectFields, true)) return false;
         }
@@ -114,10 +127,12 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
     
     /**
      * Gets field names from a project
+     * 
      * @param string $pid The project's ID
+     * 
      * @return string[] field names
      */
-    private function getFieldNames($pid) {
+    private function getFieldNames(string $pid) {
         global $module;
         $sql = "SELECT field_name FROM redcap_metadata WHERE project_id = ?";
         $query = $module->query($sql, $pid);
@@ -129,13 +144,16 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
     }
 
 
-    /////  CONTACT  /////
+    /***********\
+    |  CONTACT  |
+    \***********/
 
     /**
      * Get contact person info from system settings.
+     * 
      * @return void
      */
-    private function get_contact() {
+    private function get_contact_config() {
         $contactName    = $this->getSystemSetting("contact-name");
         $contactEmail   = $this->getSystemSetting("contact-email"); 
         if (is_null($contactName) | is_null($contactEmail)) {
@@ -148,28 +166,172 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
     }
 
 
-
-    /*********************************************\
-     * THIS SECTION DEALS WITH EMAILING USERS    *
-     * WHEN THEY HAVE DOWNLOADED GRANT DOCUMENTS *
-    \*********************************************/
+    /**********\
+    |  COLORS  |
+    \**********/
 
     /**
-     * Grabs system settings related to emailing users
-     * @return array Contains enabled status ("enabled", from address ("from"), subject ("subject"), and body text ("body")
+     * Get settings for aesthetics and set defaults if necessary.
+     * 
+     * @return void
      */
-    function get_email_settings() {
-        $result = array();
-        $result["enabled"] = $this->getSystemSetting('email-users');
-        $result["from"] = $this->getSystemSetting('email-from-address');
-        $result["subject"] = $this->getSystemSetting('email-subject');
-        $result["body"] = $this->getSystemSetting('email-body');
+    private function get_color_config() {
+        $accentColor            = $this->getSystemSetting("accent-color");
+        $accentTextColor        = $this->getSystemSetting("text-color");
+        $secondaryAccentColor   = $this->getSystemSetting("secondary-accent-color");
+        $secondaryTextColor     = $this->getSystemSetting("secondary-text-color");
 
-        if (is_null($result["subject"])) $result["subject"] = "Funded Grant Database Document Downloads";
-        if (is_null($result["body"])) $result["body"] = "<br>Hello [full-name],<br><br>This message is a notification that you have downloaded grant documents from the following grants using the <strong>[database-title]</strong>:<br><br>[download-table]<br><br>Questions? Contact [contact-name] (<a href=\"mailto:[contact-email]\">[contact-email]</a>)";        
+        $accentColor            = is_null($accentColor) ? "#00356b" : $accentColor;
+        $accentTextColor        = is_null($accentTextColor) ? "#f9f9f9" : $accentTextColor;
+        $secondaryAccentColor   = is_null($secondaryAccentColor) ? $this->adjustBrightness($accentColor, 0.50) : $secondaryAccentColor;
+        $secondaryAccentBright  = $this->getBrightness($secondaryAccentColor);
+        $newSecondaryTextColor  = $this->adjustBrightness($accentTextColor, $secondaryAccentBright >= 0.70 ? -0.9 : 0.9);
+        $secondaryTextColor     = is_null($secondaryTextColor) ? $newSecondaryTextColor : $secondaryTextColor;
 
-        return $result;
+        $this->config["colors"] = array(
+            "accentColor"           => $accentColor,
+            "accentTextColor"       => $accentTextColor,
+            "secondaryAccentColor"  => $secondaryAccentColor,
+            "secondaryTextColor"    => $secondaryTextColor,
+        );
     }
+
+    /**
+     * Lighten or darken a color by the provided percent.
+     * 
+     * @param string $hexCode
+     * @param float $adjustPercent
+     * 
+     * @return string new color's hex code
+     */
+    private function adjustBrightness(string $hexCode, float $adjustPercent) {
+        $hexCode = ltrim($hexCode, '#');
+
+        if (strlen($hexCode) == 3) {
+            $hexCode = $hexCode[0] . $hexCode[0] . $hexCode[1] . $hexCode[1] . $hexCode[2] . $hexCode[2];
+        }
+
+        $hexCode = array_map('hexdec', str_split($hexCode, 2));
+
+        foreach ($hexCode as & $color) {
+            $adjustableLimit = $adjustPercent < 0 ? $color : 255 - $color;
+            $adjustAmount = ceil($adjustableLimit * $adjustPercent);
+
+            $color = str_pad(dechex($color + $adjustAmount), 2, '0', STR_PAD_LEFT);
+        }
+        return '#' . implode($hexCode);
+    }
+
+    /**
+     * Get how bright the provided color is.
+     * 
+     * @param string $hexCode the color
+     * 
+     * @return float brightness of the color from 0 to 1
+     */
+    private function getBrightness(string $hexCode) {
+        $hexCode = ltrim($hexCode, '#');
+        if (strlen($hexCode) == 3) {
+            $hexCode = $hexCode[0] . $hexCode[0] . $hexCode[1] . $hexCode[1] . $hexCode[2] . $hexCode[2];
+        }
+        $hexCode = array_map('hexdec', str_split($hexCode, 2));
+        $sum = 0;
+        foreach ($hexCode as $color) {
+            $sum += $color;
+        }
+        return $sum / (255*3);
+    }
+
+
+    /*********\
+    |  FILES  |
+    \*********/
+
+    /**
+     * Get paths to image files used in the EM
+     * 
+     * @return void
+     */
+    private function get_file_config() {
+        $logoFile       = $this->getSystemSetting("logo");
+        $favicon        = $this->getSystemSetting("favicon");
+
+        $logoImage      = is_null($logoFile) ? $this->getUrl("img/yu.png") : $this->getFile($logoFile);
+        $faviconImage   = is_null($favicon) ? $this->getUrl("img/favicon.ico") : $this->getFile($favicon);
+
+        $this->config["files"] = array(
+            "logoImage"     => $logoImage,
+            "faviconImage"  => $faviconImage
+        );
+    }
+
+
+    /**
+     * Get url to file with provided edoc ID.
+     * 
+     * @param string $edocId ID of the file to find
+     * 
+     * @return void
+     */
+    private function getFile(string $edocId) {
+        $result = $this->query('SELECT stored_name FROM redcap_edocs_metadata WHERE doc_id = ?', $edocId);
+        $filename = $result->fetch_assoc()["stored_name"];
+        return APP_PATH_WEBROOT_FULL."edocs/".$filename;
+    }
+
+
+    /********\
+    |  TEXT  |
+    \********/
+
+    /**
+     * Get settings for text used throughout the EM
+     * 
+     * @return void
+     */
+    private function get_text_config() {
+        $databaseTitle  = $this->getSystemSetting("database-title");
+        $databaseTitle  = is_null($databaseTitle) ? "Yale University Funded Grant Database" : $databaseTitle;
+
+        $this->config["text"] = array(
+            "databaseTitle" => $databaseTitle
+        );
+    }
+
+
+    /*********\
+    |  EMAIL  |
+    \*********/
+
+    /**
+     * Grabs system settings related to emailing users upon downloading files
+     * @return void
+     */
+    private function get_email_config() {
+        $enabled  = $this->getSystemSetting('email-users');
+        $from     = $this->getSystemSetting('email-from-address');
+        $subject  = $this->getSystemSetting('email-subject');
+        $body     = $this->getSystemSetting('email-body');
+
+        if (is_null($subject)) $subject = "Funded Grant Database Document Downloads";
+        if (is_null($body)) $body = "<br>Hello [full-name],<br><br>This message is a notification that you have downloaded grant documents from the following grants using the <strong>[database-title]</strong>:<br><br>[download-table]<br><br>Questions? Contact [contact-name] (<a href=\"mailto:[contact-email]\">[contact-email]</a>)";        
+
+        $this->config["emailUsers"] = array(
+            "enabled"   => $enabled,
+            "from"      => $from,
+            "subject"   => $subject,
+            "body"      => $body
+        );
+    }
+    
+
+
+
+    ###################################################
+    ###   THIS SECTION DEALS WITH EMAILING USERS    ###
+    ###  WHEN THEY HAVE DOWNLOADED GRANT DOCUMENTS  ###
+    ###################################################
+
 
     /**
      * Grabs download information for all grants in the last 24 hours

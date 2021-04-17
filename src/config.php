@@ -7,23 +7,7 @@ $module->get_config();
 
 
 // Aesthetics
-$accentColor            = $module->getSystemSetting("accent-color");
-$accentTextColor        = $module->getSystemSetting("text-color");
-$secondaryAccentColor   = $module->getSystemSetting("secondary-accent-color");
-$secondaryTextColor     = $module->getSystemSetting("secondary-text-color");
-$logoFile               = $module->getSystemSetting("logo");
-$favicon                = $module->getSystemSetting("favicon");
-$databaseTitle          = $module->getSystemSetting("database-title");
 
-
-// Set default if any aesthetics are missing
-$accentColor            = is_null($accentColor) ? "#00356b" : $accentColor;
-$accentTextColor        = is_null($accentTextColor) ? "#f9f9f9" : $accentTextColor;
-$secondaryAccentColor   = is_null($secondaryAccentColor) ? adjustBrightness($accentColor, 0.50) : $secondaryAccentColor;
-$secondaryTextColor     = is_null($secondaryTextColor) ? adjustBrightness($accentTextColor, getBrightness($secondaryAccentColor) >= 0.70 ? -1 : 1) : $secondaryTextColor;
-$logoImage              = is_null($logoFile) ? $module->getUrl("img/yu.png") : getFile($logoFile);
-$faviconImage           = is_null($favicon) ? $module->getUrl("img/favicon.ico") : getFile($favicon);
-$databaseTitle          = is_null($databaseTitle) ? "Yale University Funded Grant Database" : $databaseTitle;
 
 
 // Get Custom Fields
@@ -32,12 +16,7 @@ $customFields           = checkCustomFields($customFields);
 
 
 
-function getFile($edocId) {
-    global $module;
-    $result = $module->query('SELECT stored_name FROM redcap_edocs_metadata WHERE doc_id = ?', $edocId);
-    $filename = $result->fetch_assoc()["stored_name"];
-    return APP_PATH_WEBROOT_FULL."edocs/".$filename;
-}
+
 
 function getSystemSubSettings() {
     global $module;
