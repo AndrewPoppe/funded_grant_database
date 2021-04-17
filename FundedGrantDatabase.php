@@ -204,11 +204,16 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
         $newSecondaryTextColor  = $this->adjustBrightness($accentTextColor, $secondaryAccentBright >= 0.70 ? -0.9 : 0.9);
         $secondaryTextColor     = is_null($secondaryTextColor) ? $newSecondaryTextColor : $secondaryTextColor;
 
+        $secondaryHoverColor    = $this->adjustBrightness($secondaryAccentColor, -0.25);
+        $secondaryHoverTextColor= $this->adjustBrightness($secondaryTextColor, $this->getBrightness($secondaryHoverColor) >= 0.50 ? -0.50 : 0.50); 
+
         $this->config["colors"] = array(
-            "accentColor"           => $accentColor,
-            "accentTextColor"       => $accentTextColor,
-            "secondaryAccentColor"  => $secondaryAccentColor,
-            "secondaryTextColor"    => $secondaryTextColor,
+            "accentColor"               => $accentColor,
+            "accentTextColor"           => $accentTextColor,
+            "secondaryAccentColor"      => $secondaryAccentColor,
+            "secondaryTextColor"        => $secondaryTextColor,
+            "secondaryHoverColor"       => $secondaryHoverColor,
+            "secondaryHoverTextColor"   => $secondaryHoverTextColor
         );
     }
 
@@ -221,7 +226,7 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
      * 
      * @return string new color's hex code
      */
-    private function adjustBrightness(string $hexCode, float $adjustPercent) {
+    public function adjustBrightness(string $hexCode, float $adjustPercent) {
         $hexCode = ltrim($hexCode, '#');
 
         if (strlen($hexCode) == 3) {
@@ -794,5 +799,40 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
         }
         return $result;
     }
+
+
+    #########################
+    ###  GENERAL METHODS  ###
+    #########################
+
+        
+    /**
+     * Creates the header/taskbar for most pages.
+     * 
+     * @param string $role User's role
+     * 
+     * @return void
+     */
+    function createHeaderAndTaskBar(string $role) {
+        $logoImage = $this->config["files"]["logoImage"];
+        $accentColor = $this->config["colors"]["accentColor"];
+        $grantsProjectId = $this->config["projects"]["grants"]["projectId"];
+        $userProjectId = $this->config["projects"]["user"]["projectId"];
+
+        echo '<div style="padding: 10px; background-color: '.\REDCap::escapeHtml($accentColor).';"></div><img src="'.\REDCap::escapeHtml($logoImage).'" style="vertical-align:middle"/>
+                <hr>
+                <a href="'.$this->getUrl("src/grants.php").'">Grants</a> | ';
+        if ($role != 1) {
+            echo '<a href="'.$this->getUrl("src/statistics.php").'">Use Statistics</a> | ';
+        }
+        if ($role == 3) {
+            echo "<a href='".APP_PATH_WEBROOT."DataEntry/record_status_dashboard.php?pid=".\REDCap::escapeHtml($grantsProjectId)."' target='_blank'>Register Grants</a> | ";
+            echo "<a href='".APP_PATH_WEBROOT."DataEntry/record_status_dashboard.php?pid=".\REDCap::escapeHtml($userProjectId)."' target='_blank'>Administer Users</a> | ";
+        }
+        echo '<a href ="http://projectreporter.nih.gov/reporter.cfm">NIH RePORTER</a> |
+        <a href ="http://grants.nih.gov/grants/oer.htm">NIH-OER</a>';
+    }
+
+
 
 }
