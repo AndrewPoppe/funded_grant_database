@@ -134,9 +134,8 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
      * @return string[] field names
      */
     private function getFieldNames(string $pid) {
-        global $module;
         $sql = "SELECT field_name FROM redcap_metadata WHERE project_id = ?";
-        $query = $module->query($sql, $pid);
+        $query = $this->query($sql, $pid);
         $result = array();
         while ($row = $query->fetch_row()) {
             array_push($result, $row[0]);
@@ -651,16 +650,12 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
      * @param array $cronAttributes A copy of the cron's configuration block from config.json.
      */
     public function send_download_emails($cronAttributes){
-        $grantsProjectId    = $this->getSystemSetting("grants-project");
-        $userProjectId      = $this->getSystemSetting("users-project");
-        $contactName        = $this->getSystemSetting("contact-name");
-        $contactEmail       = $this->getSystemSetting("contact-email"); 
-        $databaseTitle      = $this->getSystemSetting("database-title");
-        $databaseTitle      = is_null($databaseTitle) ? "Yale University Funded Grant Database" : $databaseTitle;
+        $this->get_config();
+        $grantsProjectId = $this->config["projects"]["grants"]["projectId"];
+        $userProjectId = $this->config["projects"]["user"]["projectId"];
         
         // Check if emails are enabled in EM
-        $settings = $this->get_email_settings();
-        if (!$settings["enabled"]) return;
+        if (!$this->config["emailUsers"]["enabled"]) return;
 
         // Get all downloads in the last 24 hours
         $allDownloads = $this->get_todays_downloads($grantsProjectId, $userProjectId);
@@ -686,7 +681,7 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
             $table .= "</table>";
 
             // format the body to insert download table
-            $formattedBody = $this->formatBody($settings["body"], array(
+            $formattedBody = $this->formatBody($this->config["emailUsers"]["body"], array(
                 "[download-table]"=>$table, 
                 "[first-name]"=>$user["first_name"],
                 "[last-name]"=>$user["last_name"],
@@ -696,7 +691,7 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
             ));
             
             // Send the email
-            \REDCap::email($user["email_address"], $settings["from"], $settings["subject"], $formattedBody);
+            \REDCap::email($user["email_address"], $this->config["emailUsers"]["from"], $this->config["emailUsers"]["subject"], $formattedBody);
 
         }
     }
