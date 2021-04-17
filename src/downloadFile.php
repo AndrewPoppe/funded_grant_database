@@ -4,10 +4,8 @@
 
 # verify user access
 if (!isset($_COOKIE['grant_repo'])) {
-	header("Location: index.php");
+	header("Location: ".$module->getUrl("src/index.php"));
 }
-
-require_once("base.php");
 
 $filename = $module->getSafePath($_GET['f'], APP_PATH_TEMP);
 $dieMssg = "Improper filename ".$filename;

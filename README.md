@@ -64,7 +64,7 @@ A complete listing of the configuration options:
 >
 >\[download-table\]  
 >
->Questions? Contact \[contact-name\] ([\[contact-email\]]("mailto:\[contact-email\]"))
+>Questions? Contact \[contact-name\] (\<a href=\\"mailto:\[contact-email\]\\">\[contact-email\]\</a>)
 
 ## Attribution
 

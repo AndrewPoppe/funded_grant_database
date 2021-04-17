@@ -4,17 +4,18 @@
 
 # verify user access
 if (!isset($_COOKIE['grant_repo'])) {
-	header("Location: ".$module->getUrl("index.php"));
+	header("Location: ".$module->getUrl("src/index.php"));
 }
 
-require_once("base.php");
+// set configs
+$module->get_config();
 
 # update user role
-$role = updateRole($userid);
+$role = $module->updateRole($userid);
 
 # make sure role is not empty
 if ($role == "") {
-	header("Location: ".$module->getUrl("index.php"));
+	header("Location: ".$module->getUrl("src/index.php"));
 }
 
 # log visit
@@ -30,14 +31,15 @@ $awards = array(
 );
 
 # get metadata
+$grantsProjectId = $module->config["projects"]["grants"]["projectId"];
 $metadata = json_decode(\REDCap::getDataDictionary($grantsProjectId, "json"), true);
-$choices = getChoices($metadata);
+$choices = $module->getChoices($metadata);
 
 # get event_id
 $eventId = $module->getEventId($grantsProjectId);
 
 # get grants instrument name
-$grantsInstrument = getGrantsInstrument($metadata, 'grants_number');
+$grantsInstrument = $module->getGrantsInstrument($metadata, 'grants_number');
 
 // Pull all data in grants project
 // Except do not include records not marked as "Complete" on grants instrument
@@ -50,10 +52,10 @@ $grants = json_decode(\REDCap::getData(array(
 )), true);
 
 // get award options
-$awardOptions = getAllChoices($choices, array_keys($awards));
+$awardOptions = $module->getAllChoices($choices, array_keys($awards));
 
 // get award option values
-$awardOptionValues = combineValues($grants, array_keys($awards));
+$awardOptionValues = $module->combineValues($grants, array_keys($awards));
 
 // get column orders
 $defaultColumns = array(
@@ -67,20 +69,14 @@ $defaultColumns = array(
 	array("label"=>"Acquire", 		"field"=>"download", "default"=>true, "searchable"=>false, "data"=>"acquire"),
 	array("label"=>"Thesaurus", 	"field"=>"grants_thesaurus", "visible"=>false, "default"=>true, "data"=>"thesaurus")
 );
-$columnOrders = getColumnOrders($customFields, $defaultColumns);
+$columnOrders = $module->getColumnOrders($module->config["customFields"]["fields"], $defaultColumns);
 ksort($columnOrders);
-
-
-// NEED TO CHANGE 0/1 in CUSTOM COLUMNS TO BE true/false so that visibility will work correctly
-
-
-
 ?>
 
 <html>
 	<head>
-		<title><?php echo \REDCap::escapeHtml($databaseTitle) ?></title>
-		<link rel="shortcut icon" type="image" href="<?php echo \REDCap::escapeHtml($faviconImage) ?>"/> 
+		<title><?php echo \REDCap::escapeHtml($module->config["text"]["databaseTitle"]) ?></title>
+		<link rel="shortcut icon" type="image" href="<?php echo \REDCap::escapeHtml($module->config["files"]["faviconImage"]) ?>"/> 
 		<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
 		<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.10.24/af-2.3.5/b-1.7.0/b-colvis-1.7.0/b-html5-1.7.0/b-print-1.7.0/rg-1.1.2/sb-1.0.1/sp-1.2.2/sl-1.3.3/datatables.min.css"/>
  		<link rel="stylesheet" type="text/css" href="<?php echo $module->getUrl("css/basic.css") ?>">
@@ -91,19 +87,16 @@ ksort($columnOrders);
 		<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 		<style>
 			table.dataTable tr.dtrg-group.dtrg-level-0 td { 
-				background-color: <?php echo \REDCap::escapeHtml($accentColor); ?>; 
-				color: <?php echo \REDCap::escapeHtml($accentTextColor); ?>;
+				background-color: <?php echo \REDCap::escapeHtml($module->config["colors"]["accentColor"]); ?>; 
+				color: <?php echo \REDCap::escapeHtml($module->config["colors"]["accentTextColor"]); ?>;
 			}
 			div.dtsp-panesContainer tr.selected {
-				background-color: <?php echo \REDCap::escapeHtml($secondaryAccentColor); ?> !important;
-				color: <?php echo \REDCap::escapeHtml($secondaryTextColor); ?>;
+				background-color: <?php echo \REDCap::escapeHtml($module->config["colors"]["secondaryAccentColor"]); ?> !important;
+				color: <?php echo \REDCap::escapeHtml($module->config["colors"]["secondaryTextColor"]); ?>;
 			}
 			div.dtsp-panesContainer tr.selected:hover {
-				background-color: <?php echo adjustBrightness($secondaryAccentColor, -0.25); ?> !important;
-				color: <?php
-					$newColor = adjustBrightness($secondaryAccentColor, -0.25);
-					echo adjustBrightness($secondaryTextColor, getBrightness($newColor) >= 0.50 ? -0.50 : 0.50); 
-				?>;
+				background-color: <?php echo $module->config["colors"]["secondaryHoverColor"]; ?> !important;
+				color: <?php echo $module->config["colors"]["secondaryHoverTextColor"]; ?>;
 				cursor: pointer;
 			}
 		</style>	
@@ -112,8 +105,8 @@ ksort($columnOrders);
 		<br/>
 		<div id="container" style="padding-left:8%;  padding-right:10%; margin-left:auto; margin-right:auto; ">
 			<div id="header">
-				<?php createHeaderAndTaskBar($role);?>
-				<h3><?php echo \REDCap::escapeHtml($databaseTitle) ?></h3>
+				<?php $module->createHeaderAndTaskBar($role);?>
+				<h3><?php echo \REDCap::escapeHtml($module->config["text"]["databaseTitle"]) ?></h3>
 				<i>You may download grant documents by clicking "download" links below. The use of the grants document database is strictly limited to authorized individuals and you are not permitted to share files or any embedded content with other individuals. All file downloads are logged.</i>
 				<hr/>
 			</div>
@@ -156,6 +149,7 @@ ksort($columnOrders);
 			</div>
 		</div>
 		<script>
+		(function($, window, document) {
 			function createOption(option, column) {
 				return {
 					label: option,
@@ -286,6 +280,7 @@ ksort($columnOrders);
 					}
 				});
 			});
+		}(window.jQuery, window, document));
 		</script>
     </body>
 </html>

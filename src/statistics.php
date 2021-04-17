@@ -7,9 +7,12 @@ if (!isset($_COOKIE['grant_repo'])) {
 	header("Location: ".$module->getUrl("src/index.php"));
 }
 
-require_once("base.php");
+// set configs
+$module->get_config();
+$grantsProjectId = $module->config["projects"]["grants"]["projectId"];
+$userProjectId = $module->config["projects"]["user"]["projectId"];
 
-$role = updateRole($userid);
+$role = $module->updateRole($userid);
 if ($role == 1 | $role == "") {
 	header("Location: ".$module->getUrl("src/index.php"));
 }
@@ -19,7 +22,7 @@ $module->log("Visited Statistics Page", array("user"=>$userid, "role"=>$role));
 
 # get metadata
 $metadataJSON = \REDCap::getDataDictionary($grantsProjectId, "json");
-$choices = getChoices(json_decode($metadataJSON, true));
+$choices = $module->getChoices(json_decode($metadataJSON, true));
 
 # get grant data records
 $filterLogic = $role == 2 ? '[pi_netid] = "'.$userid.'"' : NULL;
@@ -81,8 +84,8 @@ while ($row = $result->fetch_array()) {
 ?>
 <html>
 	<head>
-		<title><?php echo \REDCap::escapeHtml($databaseTitle) ?> - Document Download Information</title>
-		<link rel="shortcut icon" type="image" href="<?php echo \REDCap::escapeHtml($faviconImage) ?>"/> 
+		<title><?php echo \REDCap::escapeHtml($module->config["text"]["databaseTitle"]) ?> - Document Download Information</title>
+		<link rel="shortcut icon" type="image" href="<?php echo \REDCap::escapeHtml($module->config["files"]["faviconImage"]) ?>"/> 
 		<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
 		<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.10.24/af-2.3.5/b-1.7.0/b-colvis-1.7.0/b-html5-1.7.0/b-print-1.7.0/rg-1.1.2/sb-1.0.1/sp-1.2.2/sl-1.3.3/datatables.min.css"/>
 		<link rel="stylesheet" type="text/css" href="<?php echo $module->getUrl("css/basic.css") ?>">
@@ -93,19 +96,16 @@ while ($row = $result->fetch_array()) {
 		<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 		<style>
 			table.dataTable tr.dtrg-group.dtrg-level-0 td { 
-				background-color: <?php echo \REDCap::escapeHtml($accentColor); ?>; 
-				color: <?php echo \REDCap::escapeHtml($accentTextColor); ?>;
+				background-color: <?php echo \REDCap::escapeHtml($module->config["colors"]["accentColor"]); ?>; 
+				color: <?php echo \REDCap::escapeHtml($module->config["colors"]["accentTextColor"]); ?>;
 			}
 			div.dtsp-panesContainer tr.selected {
-				background-color: <?php echo \REDCap::escapeHtml($secondaryAccentColor); ?> !important;
-				color: <?php echo \REDCap::escapeHtml($secondaryTextColor); ?>;
+				background-color: <?php echo \REDCap::escapeHtml($module->config["colors"]["secondaryAccentColor"]); ?> !important;
+				color: <?php echo \REDCap::escapeHtml($module->config["colors"]["secondaryTextColor"]); ?>;
 			}
 			div.dtsp-panesContainer tr.selected:hover {
-				background-color: <?php echo adjustBrightness($secondaryAccentColor, -0.25); ?> !important;
-				color: <?php
-					$newColor = adjustBrightness($secondaryAccentColor, -0.25);
-					echo adjustBrightness($secondaryTextColor, getBrightness($newColor) >= 0.50 ? -0.50 : 0.50); 
-				?>;
+				background-color: <?php echo $module->config["colors"]["secondaryHoverColor"]; ?> !important;
+				color: <?php echo $module->config["colors"]["secondaryHoverTextColor"]; ?>;
 				cursor: pointer;
 			}
 		</style>		
@@ -114,10 +114,8 @@ while ($row = $result->fetch_array()) {
 		<br/>
 		<div style="padding-left:8%;  padding-right:10%; margin-left:auto; margin-right:auto;">
 			<div id="header">
-				<?php
-					createHeaderAndTaskBar($role);
-				?>
-				<h3><?php echo $databaseTitle ?> - Usage Statistics</h3>
+				<?php $module->createHeaderAndTaskBar($role);?>
+				<h3><?php echo $module->config["text"]["databaseTitle"] ?> - Usage Statistics</h3>
 				<i>This page shows who has downloaded grant documents and when they did so.</i>
 				<hr><br/>
 			</div>
@@ -159,77 +157,79 @@ while ($row = $result->fetch_array()) {
 				</tbody>
 		</div>
 		<script>
-		$(document).ready( function () {
-			$('#statsTable').DataTable({
-				order: [[0, 'asc'], [1, 'asc']],
-				rowGroup: {
-					dataSrc: [
-						0, 
-						function (row) {
-							return `${row[1]} (${row[2]})`;
+		(function($, window, document) {
+			$(document).ready( function () {
+				$('#statsTable').DataTable({
+					order: [[0, 'asc'], [1, 'asc']],
+					rowGroup: {
+						dataSrc: [
+							0, 
+							function (row) {
+								return `${row[1]} (${row[2]})`;
+							}
+						]
+					},
+					columnDefs: [
+						{
+							targets: [0,1,2,3,4],
+							visible: false,
+							searchable: true
+						}
+						/*{
+							targets: [2],
+							searchPanes:{
+								options:[
+									{
+										label: 'GRANT NUMBER CONTAINS 5',
+										value: function(rowData, rowIdx) {
+											return rowData[2].includes("5");
+										}
+									}
+								]
+							}
+						}*/
+					],
+					
+					//pageLength: 1000,
+					dom: 'lBfrtip',
+					buttons: [
+						{
+							extend: 'searchPanes',
+							config: {
+								cascadePanes: true
+							}
+							
+						},
+						{
+							extend: 'searchBuilder'
+						},
+						'colvis',
+						{
+							extend: 'csv',
+							exportOptions: { columns: [0, 1, 2, ':visible'] }
+						},
+						{ 
+							extend: 'excel',
+							exportOptions: { columns: [0, 1, 2, ':visible'] }
+						},
+						{ 
+							extend: 'pdf',
+							exportOptions: { columns: [0, 1, 2, ':visible'] }
 						}
 					]
-				},
-				columnDefs: [
-					{
-						targets: [0,1,2,3,4],
-						visible: false,
-						searchable: true
-					}
-					/*{
-						targets: [2],
-						searchPanes:{
-							options:[
-								{
-									label: 'GRANT NUMBER CONTAINS 5',
-									value: function(rowData, rowIdx) {
-										return rowData[2].includes("5");
-									}
-								}
-							]
-						}
-					}*/
-				],
+
+				});
+
+				$('#stats').removeClass('dataTableParentHidden');
 				
-				//pageLength: 1000,
-				dom: 'lBfrtip',
-				buttons: [
-					{
-						extend: 'searchPanes',
-						config: {
-							cascadePanes: true
-						}
-						
-					},
-					{
-						extend: 'searchBuilder'
-					},
-					'colvis',
-					{
-						extend: 'csv',
-						exportOptions: { columns: [0, 1, 2, ':visible'] }
-					},
-					{ 
-						extend: 'excel',
-						exportOptions: { columns: [0, 1, 2, ':visible'] }
-					},
-					{ 
-						extend: 'pdf',
-						exportOptions: { columns: [0, 1, 2, ':visible'] }
+				$('#statsTable').DataTable().on( 'buttons-action', function ( e, buttonApi, dataTable, node, config ) {
+					const text = buttonApi.text();
+					if (text.search(/Panes|Builder/)) {
+						$('.dt-button-collection').draggable();
 					}
-				]
-
+				});
 			});
-
-			$('#stats').removeClass('dataTableParentHidden');
-			
-			$('#statsTable').DataTable().on( 'buttons-action', function ( e, buttonApi, dataTable, node, config ) {
-				const text = buttonApi.text();
-				if (text.search(/Panes|Builder/)) {
-					$('.dt-button-collection').draggable();
-				}
-			});
-	});
+		}(window.jQuery, window, document));
 		</script>
 	</body>
 </html>
