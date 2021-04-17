@@ -4,17 +4,17 @@
 
 # verify user access
 if (!isset($_COOKIE['grant_repo'])) {
-	header("Location: ".$module->getUrl("index.php"));
+	header("Location: ".$module->getUrl("src/index.php"));
 }
 
 require_once("base.php");
 
 # update user role
-$role = updateRole($userid);
+$role = $module->updateRole($userid);
 
 # make sure role is not empty
 if ($role == "") {
-	header("Location: ".$module->getUrl("index.php"));
+	header("Location: ".$module->getUrl("src/index.php"));
 }
 
 # log visit
@@ -30,14 +30,15 @@ $awards = array(
 );
 
 # get metadata
+$grantsProjectId = $module->config["projects"]["grants"]["projectId"];
 $metadata = json_decode(\REDCap::getDataDictionary($grantsProjectId, "json"), true);
-$choices = getChoices($metadata);
+$choices = $module->getChoices($metadata);
 
 # get event_id
 $eventId = $module->getEventId($grantsProjectId);
 
 # get grants instrument name
-$grantsInstrument = getGrantsInstrument($metadata, 'grants_number');
+$grantsInstrument = $module->getGrantsInstrument($metadata, 'grants_number');
 
 // Pull all data in grants project
 // Except do not include records not marked as "Complete" on grants instrument
@@ -50,7 +51,7 @@ $grants = json_decode(\REDCap::getData(array(
 )), true);
 
 // get award options
-$awardOptions = getAllChoices($choices, array_keys($awards));
+$awardOptions = $module->getAllChoices($choices, array_keys($awards));
 
 // get award option values
 $awardOptionValues = combineValues($grants, array_keys($awards));
