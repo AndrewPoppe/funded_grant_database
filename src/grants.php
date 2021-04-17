@@ -67,13 +67,8 @@ $defaultColumns = array(
 	array("label"=>"Acquire", 		"field"=>"download", "default"=>true, "searchable"=>false, "data"=>"acquire"),
 	array("label"=>"Thesaurus", 	"field"=>"grants_thesaurus", "visible"=>false, "default"=>true, "data"=>"thesaurus")
 );
-$columnOrders = getColumnOrders($customFields, $defaultColumns);
+$columnOrders = $module->getColumnOrders($customFields, $defaultColumns);
 ksort($columnOrders);
-
-
-// NEED TO CHANGE 0/1 in CUSTOM COLUMNS TO BE true/false so that visibility will work correctly
-
-
 
 ?>
 

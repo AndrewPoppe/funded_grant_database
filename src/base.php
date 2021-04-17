@@ -2,7 +2,7 @@
 
 /** Authors: Jon Scherdin, Andrew Poppe */
 
-require_once("config.php");
+$module->get_config();
 
 function getChoices($metadata) {
 	$choicesStrs = array();
