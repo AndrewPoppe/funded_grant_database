@@ -38,8 +38,7 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
         $this->get_custom_field_config();
         
         var_dump($this->config);
-        var_dump($this->config["customFields"]);
-        die();
+        //die();
     }
 
 
@@ -406,8 +405,116 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
     ###  CUSTOM FIELDS  ###
     #######################
 
+    /**
+     * Creates the order for columns including custom and default
+     * 
+     * @param array $customFields
+     * @param array $defaultColumns
+     * 
+     * @return array The column objects in order
+     */
+    public function getColumnOrders(array $customFields, array $defaultColumns) {
+        $nCustomFields = count($customFields);
+        $nDefaultColumns = count($defaultColumns);
+        $nTotalColumns = $nCustomFields + $nDefaultColumns;
     
+        // sort the customFields - descending
+        usort($customFields, $this->custom_field_sorter);
+    
+        // assign indices to columns
+        $columnResults = $this->custom_field_assign_indices($customFields, $nTotalColumns);
+    
+        // Now add in default columns
+        $columns = $this->default_field_assign_indices($defaultColumns, $columnResults);
 
+        return $columns;
+    }
+
+
+    /**
+     * Sorting function for columns.
+     * 
+     * @param array $a
+     * @param array $b
+     * 
+     * @return int
+     */
+    private function custom_field_sorter(array $a, array $b) {
+        if ($a["column-index"] > $b["column-index"]) {
+            return -1;
+        } else {
+            return 1;
+        }
+    }
+
+
+    /**
+     * Assign indices for custom fields.
+     * 
+     * @param array[] $customFields 
+     * @param int $nTotalColumns count of all columns including custom and default
+     * 
+     * @return array[] Associative array with 
+     *      takenIndices: array of indices that are spoken for
+     *      columns: array of custom columns with indices set
+     */
+    private function custom_field_assign_indices(array $customFields, int $nTotalColumns) {
+        $orderResults = array();
+        $takenIndices = array();
+        $higherBound = $nTotalColumns - 1;
+        $lowerBound  = 0;
+        // If there are any indices greater than the total number of columns, 
+        //      reassign their indices, pushing other indices lower if needed
+        // This also removes "ties" in custom field indices
+        foreach ($customFields as $customField) {
+            $index = (int)$customField["column-index"];
+    
+            // index is too high
+            if ($index > $higherBound) {
+                $index = $higherBound;
+                $higherBound--;
+            } 
+            // index is too low
+            else if ($index < $lowerBound) {
+                $index = $lowerBound;
+                $lowerBound++;
+            }
+            /*// if index is taken, increment
+            while (in_array($index, $takenIndices)) {
+                $index++;
+            }*/
+            
+            // Update $orderResults and $takenIndices
+            $orderResults[$index] = $customField;
+            array_push($takenIndices, $index);
+        }
+        return array(
+            "takenIndices" => $takenIndices,
+            "columns" => $orderResults
+        );
+    }
+
+
+    /**
+     * Given indices taken by custom fields, fit in the default fields.
+     * 
+     * @param array $defaultColumns
+     * @param array $columnResults
+     * 
+     * @return array columns (without the takenIndices)
+     */
+    private function default_field_assign_indices(array $defaultColumns, array $columnResults) {
+        $index = 0;
+        foreach ($defaultColumns as $defaultColumn) {
+            while (in_array($index, $columnResults["takenIndices"])) {
+                $index++;
+            }
+    
+            $columnResults["columns"][$index] = $defaultColumn;
+            array_push($columnResults["takenIndices"], $index);
+        }
+        return $columnResults["columns"];
+    }
 
 
     ###################################################
