@@ -7,10 +7,12 @@ if (!isset($_COOKIE['grant_repo'])) {
 	header("Location: ".$module->getUrl("src/index.php"));
 }
 
-require_once("base.php");
+// set configs
+$module->get_config();
+$grantsProjectId = $module->config["projects"]["grants"]["projectId"];
 
 # update user role
-$role = updateRole($userid);
+$role = $module->updateRole($userid);
 
 # make sure role is not empty
 if ($role == "") {
@@ -23,11 +25,9 @@ $grant = $_GET['record'];
 
 // log this download (accessing this page counts)
 \REDCap::logEvent("Download uploaded document", "Funded Grant Database", NULL, $grant, NULL, $grantsProjectId);
-//$module->log("Download uploaded document", array("project_id"=>$grantsProjectId, "record"=>$grant, "user"=>$userid));
-//print_r($module->queryLogs("SELECT timestamp, project_id, record, user")->fetch_assoc());
 
 // log visit
-$module->log("Visited Download Page", array("project_id"=>$grantsProjectId, "user"=>$userid, "role"=>$role));
+$module->log("Visited Download Page", array("project_id"=>$grantsProjectId, "record"=>$grant, "user"=>$userid, "role"=>$role));
 
 // If ID is not in query_string, then return error
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) exit("{$lang['global_01']}!");
@@ -35,7 +35,7 @@ if (!isset($_GET['id']) || !is_numeric($_GET['id'])) exit("{$lang['global_01']}!
 // need to set the project id since we are using a different variable name
 if (!isset($_GET['p']) || !is_numeric($_GET['p'])) exit("{$lang['global_01']}!");
 $project_id = $_GET['p'];
-define("PROJECT_ID", $project_id);
+//define("PROJECT_ID", $project_id);
 
 
 // Download file from the "edocs" web server directory
@@ -93,14 +93,14 @@ function inspectDir($dir) {
 ?>
 <html>
 	<head>
-		<title><?php echo \REDCap::escapeHtml($databaseTitle) ?> - Document Download</title>
-		<link rel="shortcut icon" type="image" href="<?php echo \REDCap::escapeHtml($faviconImage) ?>"/> 
+		<title><?php echo \REDCap::escapeHtml($module->config["text"]["databaseTitle"]) ?> - Document Download</title>
+		<link rel="shortcut icon" type="image" href="<?php echo \REDCap::escapeHtml($module->config["files"]["faviconImage"]) ?>"/> 
 		<link rel="stylesheet" type="text/css" href="<?php echo $module->getUrl("css/basic.css") ?>">
 	</head>
 	<br/>
 	<div id="container" style="padding-left:8%;  padding-right:10%; margin-left:auto; margin-right:auto; ">
 		<div id="header">
-		<?php createHeaderAndTaskBar($role);?>
+		<?php $module->createHeaderAndTaskBar($role);?>
 		<h3>Download Grant Documents</h3>
 		<i></i><hr/>
 	</div>
