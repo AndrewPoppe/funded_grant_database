@@ -86,7 +86,9 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
      * @return void
      */
     private function checkPID(string $pid, string $label) {
-        if (is_null($pid)) die ("A PID must be listed for the ".$label." in the system settings. Contact your REDCap Administrator.");
+        if (is_null($pid)) {
+            die ("A PID must be listed for the ".$label." in the system settings. Contact your REDCap Administrator.");
+        }
         $sql = 'select * from redcap_projects where project_id = ?';
         $result = $this->query($sql, $pid);
         $row = $result->fetch_assoc();
@@ -120,7 +122,9 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
      */
     private function verifyProjectMetadata(array $projectFields, array $fieldsToTest) {
         foreach ($fieldsToTest as $testField) {
-            if (!in_array($testField, $projectFields, true)) return false;
+            if (!in_array($testField, $projectFields, true)) {
+                return false;
+            }
         }
         return true;
     }
@@ -335,8 +339,12 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
         $subject  = $this->getSystemSetting('email-subject');
         $body     = $this->getSystemSetting('email-body');
 
-        if (is_null($subject)) $subject = "Funded Grant Database Document Downloads";
-        if (is_null($body)) $body = "<br>Hello [full-name],<br><br>This message is a notification that you have downloaded grant documents from the following grants using the <strong>[database-title]</strong>:<br><br>[download-table]<br><br>Questions? Contact [contact-name] (<a href=\"mailto:[contact-email]\">[contact-email]</a>)";        
+        if (is_null($subject)) {
+            $subject = "Funded Grant Database Document Downloads";
+        }
+        if (is_null($body)) {
+            $body = "<br>Hello [full-name],<br><br>This message is a notification that you have downloaded grant documents from the following grants using the <strong>[database-title]</strong>:<br><br>[download-table]<br><br>Questions? Contact [contact-name] (<a href=\"mailto:[contact-email]\">[contact-email]</a>)";
+        }        
 
         $this->config["emailUsers"] = array(
             "enabled"   => $enabled,
@@ -374,7 +382,9 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
             "enabled" => $this->getSystemSetting('use-custom-fields'),
             "fields" => array()
         );
-        if (!$result["enabled"]) return $result;
+        if (!$result["enabled"]) {
+            return $result;
+        }
         $subSettings = array('field', 'label', 'visible', 'column-index');
     
         foreach ($subSettings as $subSetting) {
@@ -395,10 +405,9 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
      * @return array[]
      */
     private function check_custom_fields(array $customFields) {
-        $result = array_filter($customFields, function($el) {
+        return array_filter($customFields, function($el) {
             return in_array($el["field"], $this->config["projects"]["grants"]["metadata"]);
         });
-        return $result;
     }
 
 
@@ -446,7 +455,6 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
         $timestamp = date('Y-m-d');
         $result = $this->authenticate($userid, $timestamp);
         if (db_num_rows($result) > 0) {
-            $user_id = db_result($result, 0, 0);
             $role = db_result($result, 0, 1);
         }
         setcookie('grant_repo', $role, ["httponly"=>true]);       
@@ -478,9 +486,7 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
         $columnResults = $this->custom_field_assign_indices($customFields, $nTotalColumns);
     
         // Now add in default columns
-        $columns = $this->default_field_assign_indices($defaultColumns, $columnResults);
-
-        return $columns;
+        return $this->default_field_assign_indices($defaultColumns, $columnResults);
     }
 
 
@@ -532,10 +538,10 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
                 $index = $lowerBound;
                 $lowerBound++;
             }
-            /*// if index is taken, increment
+            // if index is taken, increment
             while (in_array($index, $takenIndices)) {
                 $index++;
-            }*/
+            }
             
             // Update $orderResults and $takenIndices
             $orderResults[$index] = $customField;
@@ -580,7 +586,7 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
      * Grabs download information for all grants in the last 24 hours
      * @return array array with one entry per user, containing an array of timestamps and grant ids 
      */
-    private function get_todays_downloads($grantsProjectId, $userProjectId) {
+    private function get_todays_downloads($grantsProjectId) {
 
         $logEventTable = \REDCap::getLogEventTable($grantsProjectId);
         $downloads = $this->query("SELECT e.ts, e.user, e.pk 
@@ -601,8 +607,12 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
         $result = array();
         while ($download = $downloads->fetch_assoc()) {
             $grant = $grants[array_search($download["pk"], array_column($grants, "record_id"))];
-            if ($download["user"] == $grant["pi_netid"]) continue;
-            if (is_null($result[$download["user"]])) $result[$download["user"]] = array();
+            if ($download["user"] == $grant["pi_netid"]) {
+                continue;
+            }
+            if (is_null($result[$download["user"]])) {
+                $result[$download["user"]] = array();
+            }
             array_push($result[$download["user"]], array(
                 "ts" => $download["ts"],
                 "time" => date('Y-m-d H:i:s', strtotime($download["ts"])),
@@ -655,10 +665,15 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
         $userProjectId = $this->config["projects"]["user"]["projectId"];
         
         // Check if emails are enabled in EM
-        if (!$this->config["emailUsers"]["enabled"]) return;
+        if (!$this->config["emailUsers"]["enabled"]) {
+            return;
+        }
 
         // Get all downloads in the last 24 hours
-        $allDownloads = $this->get_todays_downloads($grantsProjectId, $userProjectId);
+        $allDownloads = $this->get_todays_downloads($grantsProjectId);
+
+        // table columns
+        $tableColumns = ["time", "grant_number", "grant_title", "pi"];
 
         // Loop over users
         foreach ($allDownloads as $user_id=>$userDownloads) {
@@ -667,16 +682,18 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
             $user = $this->get_user_info($user_id, $userProjectId);
 
             // don't bother admins with emails
-            if ($user["user_role"] == 3) continue;
+            if ($user["user_role"] == 3) {
+                continue;
+            }
             
             // create download table
             $table = "<table><tr><th>Time</th><th>Grant Number</th><th>Grant Title</th><th>PI</th></tr>";
             foreach ($userDownloads as $download) {
-                $table .= "<tr><td>".$download["time"]."</td>" 
-                    . "<td>".$download["grant_number"]."</td>"    
-                    . "<td>".$download["grant_title"]."</td>"    
-                    . "<td>".$download["pi"]."</td>"    
-                . "</tr>";
+                $table .= "<tr>";
+                foreach ($tableColumns as $tableColumn) {
+                    $table .= "<td>".$download[$tableColumn]."</td>";
+                }
+                $table .= "</tr>";
             }
             $table .= "</table>";
 
@@ -756,7 +773,6 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
                 return $row['form_name'];
             }
         }
-        return;
     }
 
 
