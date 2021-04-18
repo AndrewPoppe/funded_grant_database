@@ -702,9 +702,9 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
                 "[download-table]"=>$table, 
                 "[first-name]"=>$user["first_name"],
                 "[last-name]"=>$user["last_name"],
-                "[database-title]"=>$databaseTitle,
-                "[contact-name]"=>$contactName, 
-                "[contact-email]"=>$contactEmail
+                "[database-title]"=>$this->config["text"]["databaseTitle"],
+                "[contact-name]"=>$this->config["contact"]["contactName"], 
+                "[contact-email]"=>$this->config["contact"]["contactEmail"]
             ));
             
             // Send the email
