@@ -449,7 +449,7 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
             $user_id = db_result($result, 0, 0);
             $role = db_result($result, 0, 1);
         }
-        setcookie('grant_repo', $role);
+        setcookie('grant_repo', $role, ["httponly"=>true]);       
         return $role;
     }
 

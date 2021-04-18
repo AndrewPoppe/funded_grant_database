@@ -2,7 +2,8 @@
 
 /** Authors: Jon Scherdin, Scott Pearson, Andrew Poppe */
 
-require_once("base.php");
+// set configs
+$module->get_config();
 
 $timestamp = date('Y-m-d');
 $role = "";
@@ -22,7 +23,7 @@ $module->log("Visited Index Page", array("user"=>$userid, "role"=>$role));
 
 # if they have agreed to the terms, create the cookie and redirect them to the grants page
 if (isset($_POST['submit'])) {
-	setcookie('grant_repo', $role);
+	setcookie('grant_repo', $role, ["httponly"=>true]);      
     header("Location: ".$module->getUrl("src/grants.php"));
 }
  
