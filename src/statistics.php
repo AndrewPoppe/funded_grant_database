@@ -82,7 +82,8 @@ while ($row = $result->fetch_array()) {
 	$downloads[$row['pk']]['hits'][] = array('ts' => $row['ts'], 'user' => $name, 'username' => $username);
 }
 ?>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 	<head>
 		<title><?php echo \REDCap::escapeHtml($module->config["text"]["databaseTitle"]) ?> - Document Download Information</title>
 		<link rel="shortcut icon" type="image" href="<?php echo \REDCap::escapeHtml($module->config["files"]["faviconImage"]) ?>"/> 
@@ -116,7 +117,7 @@ while ($row = $result->fetch_array()) {
 			<div id="header">
 				<?php $module->createHeaderAndTaskBar($role);?>
 				<h3><?php echo $module->config["text"]["databaseTitle"] ?> - Usage Statistics</h3>
-				<i>This page shows who has downloaded grant documents and when they did so.</i>
+				<em>This page shows who has downloaded grant documents and when they did so.</em>
 				<hr><br/>
 			</div>
 			<div id="stats" class="dataTableParentHidden">

@@ -37,21 +37,27 @@ if (($user_id != "") && ($startTs <= time())) {
 	$json = json_encode([$saveData]);
 	\REDCap::saveData($userProjectId, "json", $json, "overwrite");
 }
+?>
 
-echo '<html>
+<!DOCTYPE html>
+<html lang="en">
     <head>
-        <link rel="stylesheet" type="text/css" href="'.$module->getUrl("css/basic.css").'">
+        <link rel="stylesheet" type="text/css" href="<?php echo $module->getUrl("css/basic.css")?>">
     </head>
     <body style="background-color: #f9f9f9;">
         <br/>    
         <div style="padding-left:8%;  padding-right:10%; margin-left:auto; margin-right:auto; ">
-            <div style="padding: 10px; background-color: '.\REDCap::escapeHtml($module->config["colors"]["accentColor"]).';"></div>  
-            <img src="'.\REDCap::escapeHtml($module->config["files"]["logoImage"]).'" style="vertical-align:middle"/>
+            <div style="padding: 10px; background-color: <?php echo \REDCap::escapeHtml($module->config["colors"]["accentColor"]) ?>;"></div>  
+            <img src="<?php echo \REDCap::escapeHtml($module->config["files"]["logoImage"]) ?>" style="vertical-align:middle"/>
             <hr>
-            <h3>'.\REDCap::escapeHtml($module->config["text"]["databaseTitle"]).'</h3>
-            <br/>';
-if ($role != "") {
-    echo '<p><strong>NOTICE: You must agree to the following terms before using the '.\REDCap::escapeHtml($module->config["text"]["databaseTitle"]).'</strong></p>
+            <h3><?php echo \REDCap::escapeHtml($module->config["text"]["databaseTitle"]) ?></h3>
+            <br/>
+            <?php if ($role != "") { ?>
+                <p>
+                    <strong>
+                        NOTICE: You must agree to the following terms before using the <?php echo \REDCap::escapeHtml($module->config["text"]["databaseTitle"]) ?>
+                    </strong>
+                </p>
                 <ul> 
                     <li>I agree to keep the contents of the example grants confidential.</li>
                     <li>I will not share any part(s) of the grants in the database.</li>
@@ -61,11 +67,14 @@ if ($role != "") {
                 </ul>
                 <form  method="post">
                     <input type="submit" value="I agree to all terms above" name="submit" style="cursor: pointer;">
-                </form>';
-} else {
-    echo 'Please contact '.\REDCap::escapeHtml($module->config["contact"]["name"]) .
-    ' at <a href="mailto:'.\REDCap::escapeHtml($module->config["contact"]["email"]).
-    '">'.\REDCap::escapeHtml($module->config["contact"]["email"]).
-    '</a> to gain access to the '.\REDCap::escapeHtml($module->config["text"]["databaseTitle"]).'.';
-}
-echo '</div></html>';
+                </form>
+            <?php } else { ?>
+                <span>
+                    Please contact <?php echo \REDCap::escapeHtml($module->config["contact"]["name"]) ?> 
+                    at <a href="mailto:<?php echo \REDCap::escapeHtml($module->config["contact"]["email"]) ?>"> <?php echo \REDCap::escapeHtml($module->config["contact"]["email"]) ?></a> 
+                    to gain access to the <?php echo \REDCap::escapeHtml($module->config["text"]["databaseTitle"]) ?>
+                </span>
+            <?php } ?>
+        </div>
+    </body>
+</html>

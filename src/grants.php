@@ -73,7 +73,8 @@ $columnOrders = $module->getColumnOrders($module->config["customFields"]["fields
 ksort($columnOrders);
 ?>
 
-<html>
+<!DOCTYPE html>
+<html lang="en">
 	<head>
 		<title><?php echo \REDCap::escapeHtml($module->config["text"]["databaseTitle"]) ?></title>
 		<link rel="shortcut icon" type="image" href="<?php echo \REDCap::escapeHtml($module->config["files"]["faviconImage"]) ?>"/> 
@@ -107,7 +108,7 @@ ksort($columnOrders);
 			<div id="header">
 				<?php $module->createHeaderAndTaskBar($role);?>
 				<h3><?php echo \REDCap::escapeHtml($module->config["text"]["databaseTitle"]) ?></h3>
-				<i>You may download grant documents by clicking "download" links below. The use of the grants document database is strictly limited to authorized individuals and you are not permitted to share files or any embedded content with other individuals. All file downloads are logged.</i>
+				<em>You may download grant documents by clicking "download" links below. The use of the grants document database is strictly limited to authorized individuals and you are not permitted to share files or any embedded content with other individuals. All file downloads are logged.</em>
 				<hr/>
 			</div>
 

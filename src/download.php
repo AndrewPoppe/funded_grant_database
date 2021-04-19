@@ -91,7 +91,8 @@ function inspectDir($dir) {
 }
 
 ?>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 	<head>
 		<title><?php echo \REDCap::escapeHtml($module->config["text"]["databaseTitle"]) ?> - Document Download</title>
 		<link rel="shortcut icon" type="image" href="<?php echo \REDCap::escapeHtml($module->config["files"]["faviconImage"]) ?>"/> 
@@ -102,7 +103,7 @@ function inspectDir($dir) {
 		<div id="header">
 		<?php $module->createHeaderAndTaskBar($role);?>
 		<h3>Download Grant Documents</h3>
-		<i></i><hr/>
+		<hr/>
 	</div>
 	<div id="downloads">
 	<?php
