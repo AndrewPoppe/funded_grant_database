@@ -11,7 +11,6 @@ $user_id = "";
 
 # query table to authenticate user
 $result = $module->authenticate($userid, $timestamp);
-var_dump($userid);
 
 # get user_id and role
 if (db_num_rows($result) > 0) {

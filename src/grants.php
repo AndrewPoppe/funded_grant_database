@@ -72,7 +72,6 @@ $defaultColumns = array(
 );
 $columnOrders = $module->getColumnOrders($module->configuration["customFields"]["fields"], $defaultColumns);
 ksort($columnOrders);
-//var_dump($columnOrders);
 ?>
 
 <!DOCTYPE html>

@@ -33,7 +33,18 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
 
     public function __construct() {
         parent::__construct();
-        $this->config_file = $this->getModulePath() . "config/config2.json";
+        $this->filedir = $this->getModulePath() . "files/";
+        $this->configdir = $this->getModulePath() . "config/";
+
+        if (!is_dir($this->filedir)) {
+            mkdir($this->filedir);
+        }
+
+        if (!is_dir($this->configdir)) {
+            mkdir($this->configdir);
+        }
+
+        $this->config_file = $this->configdir . "config2.json";
     
         $this->configuration = $this->read_config();
         if (!$this->configuration) {
@@ -347,12 +358,6 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
         $destinationFolder = $this->getModulePath() . 'files';
         $destinationPath = $destinationFolder . '/' . basename($path);
         $destinationUrl = $this->getUrl('files/' . basename($path), true, true);
-        var_dump(array(
-            "destinationUrl"=>$destinationUrl,
-            "destinationPath"=>$destinationPath,
-            "destinationFolder" => $destinationFolder,
-            "path"=>$path
-        ));
         if (!file_exists($destinationPath)) {
             copy($path, $destinationPath); 
         }
