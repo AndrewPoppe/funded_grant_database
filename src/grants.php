@@ -258,6 +258,7 @@ ksort($columnOrders);
 							}
 						},
 						'colvis',
+						<?php if ($role == 3) { ?>
 						{
 							extend: 'csv',
 							exportOptions: { columns: ':visible' }
@@ -270,6 +271,7 @@ ksort($columnOrders);
 							extend: 'pdf',
 							exportOptions: { columns: ':visible' }
 						}
+						<?php } ?>
 					]
 				});
 
