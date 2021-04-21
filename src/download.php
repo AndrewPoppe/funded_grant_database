@@ -9,7 +9,7 @@ if (!isset($_COOKIE['grant_repo'])) {
 
 // set configs
 $module->get_config();
-$grantsProjectId = $module->config["projects"]["grants"]["projectId"];
+$grantsProjectId = $module->configuration["projects"]["grants"]["projectId"];
 
 # update user role
 $role = $module->updateRole($userid);
@@ -94,8 +94,8 @@ function inspectDir($dir) {
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title><?php echo \REDCap::escapeHtml($module->config["text"]["databaseTitle"]) ?> - Document Download</title>
-		<link rel="shortcut icon" type="image" href="<?php echo \REDCap::escapeHtml($module->config["files"]["faviconImage"]) ?>"/> 
+		<title><?php echo \REDCap::escapeHtml($module->configuration["text"]["databaseTitle"]) ?> - Document Download</title>
+		<link rel="shortcut icon" type="image" href="<?php echo \REDCap::escapeHtml($module->configuration["files"]["faviconImage"]) ?>"/> 
 		<link rel="stylesheet" type="text/css" href="<?php echo $module->getUrl("css/basic.css") ?>">
 	</head>
 	<br/>

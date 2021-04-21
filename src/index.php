@@ -3,7 +3,7 @@
 /** Authors: Jon Scherdin, Scott Pearson, Andrew Poppe */
 
 // set configs
-$module->get_config();
+//$module->get_config();
 
 $timestamp = date('Y-m-d');
 $role = "";
@@ -11,6 +11,7 @@ $user_id = "";
 
 # query table to authenticate user
 $result = $module->authenticate($userid, $timestamp);
+var_dump($userid);
 
 # get user_id and role
 if (db_num_rows($result) > 0) {
@@ -29,7 +30,7 @@ if (isset($_POST['submit'])) {
  
 $startTs = strtotime("2021-01-01");
 if (($user_id != "") && ($startTs <= time())) {
-    $userProjectId = $module->config["projects"]["user"]["projectId"];
+    $userProjectId = $module->configuration["projects"]["user"]["projectId"];
 	$saveData = [
 			"user_id" => $user_id,
 			"accessed" => '1',
@@ -47,15 +48,15 @@ if (($user_id != "") && ($startTs <= time())) {
     <body style="background-color: #f9f9f9;">
         <br/>    
         <div style="padding-left:8%;  padding-right:10%; margin-left:auto; margin-right:auto; ">
-            <div style="padding: 10px; background-color: <?php echo \REDCap::escapeHtml($module->config["colors"]["accentColor"]) ?>;"></div>  
-            <img src="<?php echo \REDCap::escapeHtml($module->config["files"]["logoImage"]) ?>" style="vertical-align:middle"/>
+            <div style="padding: 10px; background-color: <?php echo \REDCap::escapeHtml($module->configuration["colors"]["accentColor"]) ?>;"></div>  
+            <img src="<?php echo \REDCap::escapeHtml($module->configuration["files"]["logoImage"]) ?>" style="vertical-align:middle"/>
             <hr>
-            <h3><?php echo \REDCap::escapeHtml($module->config["text"]["databaseTitle"]) ?></h3>
+            <h3><?php echo \REDCap::escapeHtml($module->configuration["text"]["databaseTitle"]) ?></h3>
             <br/>
             <?php if ($role != "") { ?>
                 <p>
                     <strong>
-                        NOTICE: You must agree to the following terms before using the <?php echo \REDCap::escapeHtml($module->config["text"]["databaseTitle"]) ?>
+                        NOTICE: You must agree to the following terms before using the <?php echo \REDCap::escapeHtml($module->configuration["text"]["databaseTitle"]) ?>
                     </strong>
                 </p>
                 <ul> 
@@ -70,9 +71,9 @@ if (($user_id != "") && ($startTs <= time())) {
                 </form>
             <?php } else { ?>
                 <span>
-                    Please contact <?php echo \REDCap::escapeHtml($module->config["contact"]["name"]) ?> 
-                    at <a href="mailto:<?php echo \REDCap::escapeHtml($module->config["contact"]["email"]) ?>"> <?php echo \REDCap::escapeHtml($module->config["contact"]["email"]) ?></a> 
-                    to gain access to the <?php echo \REDCap::escapeHtml($module->config["text"]["databaseTitle"]) ?>
+                    Please contact <?php echo \REDCap::escapeHtml($module->configuration["contact"]["name"]) ?> 
+                    at <a href="mailto:<?php echo \REDCap::escapeHtml($module->configuration["contact"]["email"]) ?>"> <?php echo \REDCap::escapeHtml($module->configuration["contact"]["email"]) ?></a> 
+                    to gain access to the <?php echo \REDCap::escapeHtml($module->configuration["text"]["databaseTitle"]) ?>
                 </span>
             <?php } ?>
         </div>

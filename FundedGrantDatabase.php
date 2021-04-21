@@ -9,26 +9,60 @@ namespace YaleREDCap\FundedGrantDatabase;
  */
 class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
 
+
     ################################
     ###  CONFIGURATION SETTINGS  ###
     ################################
 
-    public $config = array(
-        "projects"      => array(),
-        "contact"       => array(),
-        "colors"        => array(),
-        "files"         => array(),
-        "text"          => array(),
-        "emailUsers"    => array(),
-        "customFields"  => array()
-    );
     
+
+    /**
+     * Hook for when module configs are saved.
+     * 
+     * @param mixed $project_id
+     * 
+     * @return void
+     */
+    function redcap_module_save_configuration($project_id) {
+        
+        $this->get_config();
+        $this->save_config();
+
+        return;
+    }
+
+    public function __construct() {
+        parent::__construct();
+        $this->config_file = $this->getModulePath() . "config/config2.json";
+    
+        $this->configuration = $this->read_config();
+        if (!$this->configuration) {
+            $this->get_config();
+            $this->save_config();
+        }
+    }
+
+    private function read_config() {
+        $file = fopen($this->config_file, "r");
+        if (!$file) return;
+        $contents = fread($file, filesize($this->config_file)) or die("UNABLE TO READ FILE");
+        fclose($file);
+        return json_decode($contents, true);
+    }
+
+    private function save_config() {
+        $file = fopen($this->config_file, "w") or die("UNABLE TO OPEN FILE");
+        fwrite($file, json_encode($this->configuration)) or die("UNABLE TO WRITE FILE");
+        fclose($file) or die("UNABLE TO CLOSE FILE");
+    }
+
 
     /**
      * Get all configuration settings for the module.
      * @return void
      */
     public function get_config() {
+        $this->clean_files();
         $this->get_project_config();
         $this->get_contact_config();
         $this->get_color_config();
@@ -61,19 +95,19 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
 
         // Make sure grants project has requisite fields
         $grantTestFields = array('grants_pi', 'grants_title', 'grants_type', 'grants_date', 'grants_number', 'grants_department', 'grants_thesaurus');
-        if (!$this->verifyProjectMetadata($this->config["projects"]["grants"]["metadata"], $grantTestFields)) {
+        if (!$this->verifyProjectMetadata($this->configuration["projects"]["grants"]["metadata"], $grantTestFields)) {
             die('The project (PID#'.$grantsProjectId.') is not a valid grants project. Contact your REDCap Administrator.');
         }
 
 
         // Make sure user project has requisite fields
         $userTestFields = array('user_id', 'user_expiration', 'user_role');
-        if (!$this->verifyProjectMetadata($this->config["projects"]["user"]["metadata"], $userTestFields)) {
+        if (!$this->verifyProjectMetadata($this->configuration["projects"]["user"]["metadata"], $userTestFields)) {
             die ('The project (PID#'.$userProjectId.') is not a valid users project. Contact your REDCap Administrator.');
         }
 
-        $this->config["projects"]["grants"]["projectId"] = $grantsProjectId;
-        $this->config["projects"]["user"]["projectId"]   = $userProjectId;
+        $this->configuration["projects"]["grants"]["projectId"] = $grantsProjectId;
+        $this->configuration["projects"]["user"]["projectId"]   = $userProjectId;
     }
 
 
@@ -159,7 +193,7 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
      * @return void
      */
     private function get_metadata(string $projectType, string $projectId) {
-        $this->config["projects"][$projectType]["metadata"] = $this->getFieldNames($projectId);
+        $this->configuration["projects"][$projectType]["metadata"] = $this->getFieldNames($projectId);
     } 
 
 
@@ -178,7 +212,7 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
         if (is_null($contactName) | is_null($contactEmail)) {
             die ("The contact person's information must be defined in the EM config. Contact your REDCap Administrator.");
         }
-        $this->config["contact"] = array(
+        $this->configuration["contact"] = array(
             "name"=>$contactName,
             "email"=>$contactEmail
         );
@@ -210,7 +244,7 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
         $secondaryHoverColor    = $this->adjustBrightness($secondaryAccentColor, -0.25);
         $secondaryHoverTextColor= $this->adjustBrightness($secondaryTextColor, $this->getBrightness($secondaryHoverColor) >= 0.50 ? -0.50 : 0.50); 
 
-        $this->config["colors"] = array(
+        $this->configuration["colors"] = array(
             "accentColor"               => $accentColor,
             "accentTextColor"           => $accentTextColor,
             "secondaryAccentColor"      => $secondaryAccentColor,
@@ -282,10 +316,13 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
         $logoFile       = $this->getSystemSetting("logo");
         $favicon        = $this->getSystemSetting("favicon");
 
-        $logoImage      = is_null($logoFile) ? $this->getUrl("img/yu.png") : $this->getFile($logoFile);
-        $faviconImage   = is_null($favicon) ? $this->getUrl("img/favicon.ico") : $this->getFile($favicon);
+        $logoImage      = is_null($logoFile) ? $this->getModulePath() . "img/yu.png" : $this->getFile($logoFile);
+        $faviconImage   = is_null($favicon) ? $this->getModulePath() . "img/favicon.ico" : $this->getFile($favicon);
 
-        $this->config["files"] = array(
+        $logoImage = $this->moveFile($logoImage);
+        $faviconImage = $this->moveFile($faviconImage);
+
+        $this->configuration["files"] = array(
             "logoImage"     => $logoImage,
             "faviconImage"  => $faviconImage
         );
@@ -302,7 +339,29 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
     private function getFile(string $edocId) {
         $result = $this->query('SELECT stored_name FROM redcap_edocs_metadata WHERE doc_id = ?', $edocId);
         $filename = $result->fetch_assoc()["stored_name"];
-        return APP_PATH_WEBROOT_FULL."edocs/".$filename;
+        return EDOC_PATH . $filename;
+    }
+
+
+    private function moveFile(string $path) {
+        $destinationFolder = $this->getModulePath() . 'files';
+        $destinationPath = $destinationFolder . '/' . basename($path);
+        $destinationUrl = $this->getUrl('files/' . basename($path), true, true);
+        var_dump(array(
+            "destinationUrl"=>$destinationUrl,
+            "destinationPath"=>$destinationPath,
+            "destinationFolder" => $destinationFolder,
+            "path"=>$path
+        ));
+        if (!file_exists($destinationPath)) {
+            copy($path, $destinationPath); 
+        }
+        return $destinationUrl;
+    }
+
+
+    private function clean_files() {
+        array_map('unlink', glob($this->getModulePath() . 'files/*'));
     }
 
 
@@ -319,7 +378,7 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
         $databaseTitle  = $this->getSystemSetting("database-title");
         $databaseTitle  = is_null($databaseTitle) ? "Yale University Funded Grant Database" : $databaseTitle;
 
-        $this->config["text"] = array(
+        $this->configuration["text"] = array(
             "databaseTitle" => $databaseTitle
         );
     }
@@ -346,7 +405,7 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
             $body = "<br>Hello [full-name],<br><br>This message is a notification that you have downloaded grant documents from the following grants using the <strong>[database-title]</strong>:<br><br>[download-table]<br><br>Questions? Contact [contact-name] (<a href=\"mailto:[contact-email]\">[contact-email]</a>)";
         }        
 
-        $this->config["emailUsers"] = array(
+        $this->configuration["emailUsers"] = array(
             "enabled"   => $enabled,
             "from"      => $from,
             "subject"   => $subject,
@@ -368,7 +427,7 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
         $customFields           = $this->get_custom_field_subsettings();
         $customFields["fields"] = $this->check_custom_fields($customFields["fields"]);
 
-        $this->config["customFields"] = $customFields;
+        $this->configuration["customFields"] = $customFields;
     }
 
 
@@ -406,7 +465,7 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
      */
     private function check_custom_fields(array $customFields) {
         return array_filter($customFields, function($el) {
-            return in_array($el["field"], $this->config["projects"]["grants"]["metadata"]);
+            return in_array($el["field"], $this->configuration["projects"]["grants"]["metadata"]);
         });
     }
 
@@ -424,7 +483,7 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
      * @return object db query object
      */
     public function authenticate(string $userid, $timestamp) {
-        $userProjectId = $this->config["projects"]["user"]["projectId"];
+        $userProjectId = $this->configuration["projects"]["user"]["projectId"];
         $sql = "SELECT a.value as 'userid', a2.value as 'role'
             FROM redcap_data a
             JOIN redcap_data a2
@@ -507,6 +566,16 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
     }
 
 
+    /* 
+        TODO: Currently index assignment works accidentally. 
+        If I have 2 custom fields (meaning 11 total fields) 
+        and set the first to have index 10, and the second
+        to have index 11 or greater, then the algorithm assigns
+        the second one to have index 11, meaning the indices 
+        of the columns are: 0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11 (no 9)
+
+        Fix that, and look harder for similar edge cases.
+    */
     /**
      * Assign indices for custom fields.
      * 
@@ -660,12 +729,11 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
      * @param array $cronAttributes A copy of the cron's configuration block from config.json.
      */
     public function send_download_emails($cronAttributes){
-        $this->get_config();
-        $grantsProjectId = $this->config["projects"]["grants"]["projectId"];
-        $userProjectId = $this->config["projects"]["user"]["projectId"];
+        $grantsProjectId = $this->configuration["projects"]["grants"]["projectId"];
+        $userProjectId = $this->configuration["projects"]["user"]["projectId"];
         
         // Check if emails are enabled in EM
-        if (!$this->config["emailUsers"]["enabled"]) {
+        if (!$this->configuration["emailUsers"]["enabled"]) {
             return;
         }
 
@@ -698,17 +766,17 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
             $table .= "</table>";
 
             // format the body to insert download table
-            $formattedBody = $this->formatBody($this->config["emailUsers"]["body"], array(
+            $formattedBody = $this->formatBody($this->configuration["emailUsers"]["body"], array(
                 "[download-table]"=>$table, 
                 "[first-name]"=>$user["first_name"],
                 "[last-name]"=>$user["last_name"],
-                "[database-title]"=>$this->config["text"]["databaseTitle"],
-                "[contact-name]"=>$this->config["contact"]["contactName"], 
-                "[contact-email]"=>$this->config["contact"]["contactEmail"]
+                "[database-title]"=>$this->configuration["text"]["databaseTitle"],
+                "[contact-name]"=>$this->configuration["contact"]["contactName"], 
+                "[contact-email]"=>$this->configuration["contact"]["contactEmail"]
             ));
             
             // Send the email
-            \REDCap::email($user["email_address"], $this->config["emailUsers"]["from"], $this->config["emailUsers"]["subject"], $formattedBody);
+            \REDCap::email($user["email_address"], $this->configuration["emailUsers"]["from"], $this->configuration["emailUsers"]["subject"], $formattedBody);
 
         }
     }
@@ -825,12 +893,12 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
      * @return void
      */
     function createHeaderAndTaskBar(string $role) {
-        $logoImage = $this->config["files"]["logoImage"];
-        $accentColor = $this->config["colors"]["accentColor"];
-        $grantsProjectId = $this->config["projects"]["grants"]["projectId"];
-        $userProjectId = $this->config["projects"]["user"]["projectId"];
+        $logoImage = $this->configuration["files"]["logoImage"];
+        $accentColor = $this->configuration["colors"]["accentColor"];
+        $grantsProjectId = $this->configuration["projects"]["grants"]["projectId"];
+        $userProjectId = $this->configuration["projects"]["user"]["projectId"];
 
-        echo '<div style="padding: 10px; background-color: '.\REDCap::escapeHtml($accentColor).';"></div><img src="'.\REDCap::escapeHtml($logoImage).'" style="vertical-align:middle"/>
+        echo '<div style="padding: 7.5px; background-color: '.\REDCap::escapeHtml($accentColor).';"></div><img src="'.\REDCap::escapeHtml($logoImage).'" style="vertical-align:middle; margin-top: 7.5px;"/>
                 <hr>
                 <a href="'.$this->getUrl("src/grants.php").'">Grants</a> | ';
         if ($role != 1) {
