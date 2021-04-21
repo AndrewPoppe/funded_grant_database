@@ -28,7 +28,6 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
         $this->get_config();
         $this->save_config();
 
-        return;
     }
 
     public function __construct() {
@@ -55,7 +54,9 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
 
     private function read_config() {
         $file = fopen($this->config_file, "r");
-        if (!$file) return;
+        if (!$file) {
+            return null;
+        }
         $contents = fread($file, filesize($this->config_file)) or die("UNABLE TO READ FILE");
         fclose($file);
         return json_decode($contents, true);
