@@ -192,6 +192,7 @@ while ($row = $result->fetch_array()) {
 					
 					//pageLength: 1000,
 					dom: 'lBfrtip',
+					stateSave: true,
 					buttons: [
 						{
 							extend: 'searchPanes',

@@ -212,6 +212,7 @@ ksort($columnOrders);
 					columns: columns,
 					//pageLength: 1000,
 					dom: 'lBfrtip',
+					stateSave: true,
 					buttons: [
 						{
 							extend: 'searchPanes',
