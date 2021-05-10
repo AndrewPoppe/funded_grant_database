@@ -2,41 +2,28 @@
 
 /** Authors: Jon Scherdin, Scott Pearson, Andrew Poppe */
 
-// set configs
-//$module->get_config();
 
 $timestamp = date('Y-m-d');
 $role = "";
-$user_id = "";
+$user_id = $module->configuration["cas"]["use_cas"] ? $module->cas_authenticator->authenticate() : $userid;
 
 # query table to authenticate user
-$result = $module->authenticate($userid, $timestamp);
+$result = $module->authenticate($user_id, $timestamp);
 
-# get user_id and role
+# get role
 if (db_num_rows($result) > 0) {
-	$user_id = db_result($result, 0, 0);
 	$role = db_result($result, 0, 1);
 }
 
 # log visit
-$module->log("Visited Index Page", array("user"=>$userid, "role"=>$role));
+$module->log("Visited Index Page", array("user"=>$user_id, "role"=>$role));
 
 # if they have agreed to the terms, create the cookie and redirect them to the grants page
 if (isset($_POST['submit'])) {
 	setcookie('grant_repo', $role, ["httponly"=>true]);      
     header("Location: ".$module->getUrl("src/grants.php"));
 }
- 
-$startTs = strtotime("2021-01-01");
-if (($user_id != "") && ($startTs <= time())) {
-    $userProjectId = $module->configuration["projects"]["user"]["projectId"];
-	$saveData = [
-			"user_id" => $user_id,
-			"accessed" => '1',
-			];
-	$json = json_encode([$saveData]);
-	\REDCap::saveData($userProjectId, "json", $json, "overwrite");
-}
+
 ?>
 
 <!DOCTYPE html>

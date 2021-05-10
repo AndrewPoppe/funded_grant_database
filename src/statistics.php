@@ -3,7 +3,8 @@
 /** Authors: Jon Scherdin, Scott Pearson, Andrew Poppe */
 
 # verify user access
-if (!isset($_COOKIE['grant_repo'])) {
+$user_id = $module->configuration["cas"]["use_cas"] ? $module->cas_authenticator->authenticate() : $userid;
+if (!$user_id or !isset($_COOKIE['grant_repo'])) {
 	header("Location: ".$module->getUrl("src/index.php"));
 }
 
@@ -11,20 +12,20 @@ if (!isset($_COOKIE['grant_repo'])) {
 $grantsProjectId = $module->configuration["projects"]["grants"]["projectId"];
 $userProjectId = $module->configuration["projects"]["user"]["projectId"];
 
-$role = $module->updateRole($userid);
+$role = $module->updateRole($user_id);
 if ($role == 1 | $role == "") {
 	header("Location: ".$module->getUrl("src/index.php"));
 }
 
 # log visit
-$module->log("Visited Statistics Page", array("user"=>$userid, "role"=>$role));
+$module->log("Visited Statistics Page", array("user"=>$user_id, "role"=>$role));
 
 # get metadata
 $metadataJSON = \REDCap::getDataDictionary($grantsProjectId, "json");
 $choices = $module->getChoices(json_decode($metadataJSON, true));
 
 # get grant data records
-$filterLogic = $role == 2 ? '[pi_netid] = "'.$userid.'"' : NULL;
+$filterLogic = $role == 2 ? '[pi_netid] = "'.$user_id.'"' : NULL;
 $grants_result = json_decode(\REDCap::getData(array(
 	'project_id'=>$grantsProjectId, 
 	'filterLogic'=>$filterLogic,
@@ -63,7 +64,7 @@ if ($role == 2) {
 	FROM redcap_data
 	WHERE project_id = ?
 	AND field_name = 'pi_netid'
-	AND value = ?)", [$grantsProjectId, $userid]); 
+	AND value = ?)", [$grantsProjectId, $user_id]); 
 }
 $query->add("ORDER BY e.ts DESC");
 $result = $query->execute();

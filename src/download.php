@@ -3,7 +3,8 @@
 /** Authors: Jon Scherdin, Andrew Poppe */
 
 # verify user access
-if (!isset($_COOKIE['grant_repo'])) {
+$user_id = $module->configuration["cas"]["use_cas"] ? $module->cas_authenticator->authenticate() : $userid;
+if (!$user_id or !isset($_COOKIE['grant_repo'])) {
 	header("Location: ".$module->getUrl("src/index.php"));
 }
 
@@ -12,7 +13,7 @@ $module->get_config();
 $grantsProjectId = $module->configuration["projects"]["grants"]["projectId"];
 
 # update user role
-$role = $module->updateRole($userid);
+$role = $module->updateRole($user_id);
 
 # make sure role is not empty
 if ($role == "") {
@@ -27,7 +28,7 @@ $grant = $_GET['record'];
 \REDCap::logEvent("Download uploaded document", "Funded Grant Database", NULL, $grant, NULL, $grantsProjectId);
 
 // log visit
-$module->log("Visited Download Page", array("project_id"=>$grantsProjectId, "record"=>$grant, "user"=>$userid, "role"=>$role));
+$module->log("Visited Download Page", array("project_id"=>$grantsProjectId, "record"=>$grant, "user"=>$user_id, "role"=>$role));
 
 // If ID is not in query_string, then return error
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) exit("{$lang['global_01']}!");

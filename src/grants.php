@@ -4,15 +4,13 @@
 
 
 # verify user access
-if (!isset($_COOKIE['grant_repo'])) {
+$user_id = $module->configuration["cas"]["use_cas"] ? $module->cas_authenticator->authenticate() : $userid;
+if (!$user_id or !isset($_COOKIE['grant_repo'])) {
 	header("Location: ".$module->getUrl("src/index.php"));
 }
 
-// set configs
-//$module->get_config();
-
 # update user role
-$role = $module->updateRole($userid);
+$role = $module->updateRole($user_id);
 
 # make sure role is not empty
 if ($role == "") {
@@ -20,7 +18,7 @@ if ($role == "") {
 }
 
 # log visit
-$module->log("Visited Grants Page", array("user"=>$userid, "role"=>$role));
+$module->log("Visited Grants Page", array("user"=>$user_id, "role"=>$role));
 
 $awards = array(
 	"k_awards" => "K Awards",

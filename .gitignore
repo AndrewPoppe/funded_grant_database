@@ -1,2 +1,6 @@
 files/*
 config/*
+vendor
+composer.lock
+composer.phar
+*.pem

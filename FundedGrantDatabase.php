@@ -50,6 +50,10 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
             $this->get_config();
             $this->save_config();
         }
+        if ($this->configuration["cas"]["use_cas"]) {
+            require_once "src/CasAuthenticator.php";
+            $this->cas_authenticator = new CasAuthenticator($this->configuration["cas"]);
+        }
     }
 
     private function read_config() {
@@ -82,6 +86,7 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
         $this->get_text_config();
         $this->get_email_config();
         $this->get_custom_field_config();
+        $this->get_cas_auth_config();
     }
 
 
@@ -473,6 +478,29 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
         return array_filter($customFields, function($el) {
             return in_array($el["field"], $this->configuration["projects"]["grants"]["metadata"]);
         });
+    }
+
+
+    /**********************\
+    |  CAS AUTHENTICATION  |
+    \**********************/
+
+    /**
+     * Grab all settings regarding CAS authentication and put in class config
+     * 
+     * @return void
+     */
+    private function get_cas_auth_config() {
+        $settings = array();
+        $settings["use_cas"]                 = $this->getSystemSetting("use-cas-login");
+        $settings["cas_host"]                = $this->getSystemSetting("cas-host");
+        $settings["cas_context"]             = $this->getSystemSetting("cas-context");
+        $settings["cas_port"]                = (int) $this->getSystemSetting("cas-port");
+        $cas_server_ca_cert_id               = $this->getSystemSetting("cas-server-ca-cert-pem");
+        $settings["cas_server_ca_cert_path"] = $this->getFile($cas_server_ca_cert_id);
+        $settings["server_force_https"]      = $this->getSystemSetting("server-force-https");
+
+        $this->configuration["cas"] = $settings;
     }
 
 
