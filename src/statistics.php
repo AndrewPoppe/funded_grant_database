@@ -4,7 +4,7 @@
 
 # verify user access
 $user_id = $module->configuration["cas"]["use_cas"] ? $module->cas_authenticator->authenticate() : $userid;
-if (!$user_id or !isset($_COOKIE['grant_repo'])) {
+if (!$user_id || !isset($_COOKIE['grant_repo'])) {
 	header("Location: ".$module->getUrl("src/index.php"));
 }
 
