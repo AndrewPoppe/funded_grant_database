@@ -4,7 +4,7 @@
 
 # verify user access
 $user_id = $module->configuration["cas"]["use_cas"] ? $module->cas_authenticator->authenticate() : $userid;
-if (!$user_id or !isset($_COOKIE['grant_repo'])) {
+if (!$user_id || !isset($_COOKIE['grant_repo'])) {
 	header("Location: ".$module->getUrl("src/index.php", true));
 }
 
@@ -21,7 +21,9 @@ if ($role == "") {
 }
 
 // grant record id for logging purposes
-if (!isset($_GET['record'])) die('No Grant Identified');
+if (!isset($_GET['record'])) {
+	exit('No Grant Identified');
+}
 $grant = $_GET['record'];
 
 // get grant info for logging purposes
@@ -38,12 +40,15 @@ $grantData = json_decode(\REDCap::getData(array(
 $module->log("Visited Download Page", array("project_id"=>$grantsProjectId, "record"=>$grant, "user"=>$user_id, "role"=>$role, "pi_netid"=>$grantData["pi_netid"]));
 
 // If ID is not in query_string, then return error
-if (!isset($_GET['id']) || !is_numeric($_GET['id'])) exit("{$lang['global_01']}!");
+if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
+	exit("{$lang['global_01']}!");
+}
 
 // need to set the project id since we are using a different variable name
-if (!isset($_GET['p']) || !is_numeric($_GET['p'])) exit("{$lang['global_01']}!");
+if (!isset($_GET['p']) || !is_numeric($_GET['p'])) {
+	exit("{$lang['global_01']}!");
+}
 $project_id = $_GET['p'];
-//define("PROJECT_ID", $project_id);
 
 
 // Download file from the "edocs" web server directory

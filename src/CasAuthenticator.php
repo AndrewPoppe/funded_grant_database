@@ -45,8 +45,6 @@ class CasAuthenticator {
         \phpCAS::forceAuthentication();
 
         // get authenticated username
-        $user = \phpCAS::isAuthenticated() ? \phpCAS::getUser() : FALSE; 
-
-        return $user;
+        return \phpCAS::isAuthenticated() ? \phpCAS::getUser() : FALSE; 
     }
 }
