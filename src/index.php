@@ -21,7 +21,7 @@ $module->log("Visited Index Page", array("user"=>$user_id, "role"=>$role));
 # if they have agreed to the terms, create the cookie and redirect them to the grants page
 if (isset($_POST['submit'])) {
 	setcookie('grant_repo', $role, ["httponly"=>true]);      
-    header("Location: ".$module->getUrl("src/grants.php"));
+    header("Location: ".$module->getUrl("src/grants.php", true));
 }
 
 ?>
@@ -34,7 +34,7 @@ if (isset($_POST['submit'])) {
     <body style="background-color: #f9f9f9;">
         <br/>    
         <div style="padding-left:8%;  padding-right:10%; margin-left:auto; margin-right:auto; ">
-            <div style="padding: 10px; background-color: <?php echo \REDCap::escapeHtml($module->configuration["colors"]["accentColor"]) ?>;"></div>  
+            <div style="padding: 7.5px; background-color: <?=\REDCap::escapeHtml($module->configuration["colors"]["accentColor"])?>;"></div>
             <img src="<?php echo \REDCap::escapeHtml($module->configuration["files"]["logoImage"]) ?>" style="vertical-align:middle"/>
             <hr>
             <h3><?php echo \REDCap::escapeHtml($module->configuration["text"]["databaseTitle"]) ?></h3>

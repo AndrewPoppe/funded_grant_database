@@ -6,7 +6,7 @@
 # verify user access
 $user_id = $module->configuration["cas"]["use_cas"] ? $module->cas_authenticator->authenticate() : $userid;
 if (!$user_id or !isset($_COOKIE['grant_repo'])) {
-	header("Location: ".$module->getUrl("src/index.php"));
+	header("Location: ".$module->getUrl("src/index.php", true));
 }
 
 # update user role
@@ -14,59 +14,82 @@ $role = $module->updateRole($user_id);
 
 # make sure role is not empty
 if ($role == "") {
-	header("Location: ".$module->getUrl("src/index.php"));
+	header("Location: ".$module->getUrl("src/index.php", true));
 }
 
 # log visit
 $module->log("Visited Grants Page", array("user"=>$user_id, "role"=>$role));
 
-$awards = array(
-	"k_awards" => "K Awards",
-	"r_awards" => "R Awards",
-	"misc_awards" => "Misc. Awards",
-	"lrp_awards" => "LRP Awards",
-	"va_merit_awards" => "VA Merit Awards",
-	"f_awards" => "F Awards",
-);
-
 # get metadata
 $grantsProjectId = $module->configuration["projects"]["grants"]["projectId"];
-$metadata = json_decode(\REDCap::getDataDictionary($grantsProjectId, "json"), true);
-$choices = $module->getChoices($metadata);
+$grantsMetadata = json_decode(\REDCap::getDataDictionary($grantsProjectId, "json"), true);
+$grantsChoices = $module->getChoices($grantsMetadata);
+
+$userProjectId = $module->configuration["projects"]["user"]["projectId"];
+$userMetadata = json_decode(\REDCap::getDataDictionary($userProjectId, "json"), true);
+$userChoices = $module->getChoices($userMetadata);
 
 # get event_id
 $eventId = $module->getEventId($grantsProjectId);
 
 # get grants instrument name
-$grantsInstrument = $module->getGrantsInstrument($metadata, 'grants_number');
+$grantsInstrument = $module->getGrantsInstrument($grantsMetadata, 'grants_number');
 
 // Pull all data in grants project
 // Except do not include records not marked as "Complete" on grants instrument
+$filterLogic = "[".$grantsInstrument."_complete] = 2";
+
+// Also include grants only if they meet these conditions:
+// 	1) Embargo date has been reached (today's date >= embargo date)
+//  2) Expiration date has not passed (today's date < expiration date)
+$filterLogic .= " and ([grant_visibility_embargo] = '' or datediff([grant_visibility_embargo], 'today', 'd', true) >= 0)";
+$filterLogic .= " and ([grants_visibility_expiration] = '' or datediff([grants_visibility_expiration], 'today', 'd', true) < 0)";
+
+
+// Also only include grants under these conditions
+//  1) Grant visibility is not set to 0 (Not Visible)
+// 	2) If Grant visibility is set to 1 (Admins only), user role is 3 (Admin)
+//  3) If Grant visibility is set to 2 (Admins and PI/Author), user role is 3 (Admin) or user_id = pi_netid
+//  4) Grant visibility is set to 3
+$isAdmin = $role == 3 ? "true" : "false";
+$filterLogic .= " and (([grant_visibility] = 1 and $isAdmin)";
+$filterLogic .= " or ([grant_visibility] = 2 and ($isAdmin or [pi_netid] = '". $user_id ."'))";
+$filterLogic .= " or [grant_visibility] = 3)";
+
+
 $grants = json_decode(\REDCap::getData(array(
 	"project_id"=>$grantsProjectId, 
 	"return_format"=>"json", 
 	"combine_checkbox_values"=>true,
 	"exportAsLabels"=>true,
-	"filterLogic"=>"[".$grantsInstrument."_complete] = 2"
+	"filterLogic"=>$filterLogic
 )), true);
 
-// get award options
-$awardOptions = $module->getAllChoices($choices, array_keys($awards));
-
-// get award option values
-$awardOptionValues = $module->combineValues($grants, array_keys($awards));
+// Add PI Name, replace "other" values with their specified values
+$grants = array_map(function($record) {
+	$record["pi"] = $record["pi_fname"]." ".$record["pi_lname"];
+	$record["pi_title"] = $record["pi_title"] == "Other" ? $record["pi_title_other"] : $record["pi_title"];
+	$record["pi_department"] = $record["pi_department"] == "Other" ? $record["pi_department_other"] : $record["pi_department"];
+	$record["nih_funding_type"] = $record["nih_funding_type"] == "Other" ? $record["nih_funding_type_other"] : $record["nih_funding_type"];
+	return $record;
+}, $grants);
 
 // get column orders
 $defaultColumns = array(
-	array("label"=>"PI", 			"field"=>"grants_pi", "default"=>true, "data"=>"pi"),
-	array("label"=>"Grant Title", 	"field"=>"grants_title", "default"=>true,"data"=>"title"),
-	array("label"=>"Award Type", 	"field"=>"grants_type", "visible"=>false, "default"=>true, "data"=>"awardType"),
-	array("label"=>"Award Option", 	"field"=>"award_option_value", "default"=>true, "visible"=>false, "data"=>"awardOption","type"=>"awardOption"),
-	array("label"=>"Grant Date", 	"field"=>"grants_date", "default"=>true, "data"=>"date"),
-	array("label"=>"Grant", 		"field"=>"grants_number", "default"=>true, "data"=>"number"),
-	array("label"=>"Department", 	"field"=>"grants_department", "visible"=>false, "default"=>true, "data"=>"department"),
-	array("label"=>"Acquire", 		"field"=>"download", "default"=>true, "searchable"=>false, "data"=>"acquire"),
-	array("label"=>"Thesaurus", 	"field"=>"grants_thesaurus", "visible"=>false, "default"=>true, "data"=>"thesaurus")
+	array("label"=>"PI", 				"field"=>"pi", 				 		"visible"=>true,	"default"=>true, "data"=>"pi"),
+	array("label"=>"Grant Title", 		"field"=>"grants_title", 	 		"visible"=>true,	"default"=>true, "data"=>"title"),
+	array("label"=>"Department", 		"field"=>"pi_department", 	 		"visible"=>true,	"default"=>true, "data"=>"department"),
+	array("label"=>"Funding Agency", 	"field"=>"funding_agency",   		"visible"=>true,	"default"=>true, "data"=>"fundingAgency"),
+	array("label"=>"Research Type", 	"field"=>"research_type",	 		"visible"=>true,	"default"=>true, "data"=>"researchType"),
+	array("label"=>"Abstract",		 	"field"=>"grants_abstract",	 		"visible"=>true,	"default"=>true, "data"=>"abstract"),
+	array("label"=>"Project Terms", 	"field"=>"project_terms", 	 		"visible"=>true,	"default"=>true, "data"=>"terms"),
+	array("label"=>"Human Subjects", 	"field"=>"human_subjects_yn",		"visible"=>true,	"default"=>true, "data"=>"humanSubjects"),
+	array("label"=>"Vertebrate Animals","field"=>"vertebrate_animals_yn",	"visible"=>true,	"default"=>true, "data"=>"animals"),
+	array("label"=>"NIH Submission #",	"field"=>"nih_submission_number",	"visible"=>true,	"default"=>true, "data"=>"submissionNumber"),
+	array("label"=>"NIH Funding Type", 	"field"=>"nih_funding_type", 		"visible"=>true,	"default"=>true, "data"=>"fundingType"),
+	array("label"=>"Grant Award Date", 	"field"=>"grant_award_date", 		"visible"=>true,	"default"=>true, "data"=>"date"),
+	array("label"=>"Grant Sections", 	"field"=>"grant_sections", 	 		"visible"=>true,	"default"=>true, "data"=>"grantSections", 	"type"=>"grantSections"),
+	array("label"=>"Acquire", 			"field"=>"download", 		 		"visible"=>true,	"default"=>true, "data"=>"acquire", 		"searchable"=>false)	
 );
 $columnOrders = $module->getColumnOrders($module->configuration["customFields"]["fields"], $defaultColumns);
 ksort($columnOrders);
@@ -109,7 +132,7 @@ ksort($columnOrders);
 			<div id="header">
 				<?php $module->createHeaderAndTaskBar($role);?>
 				<h3><?php echo \REDCap::escapeHtml($module->configuration["text"]["databaseTitle"]) ?></h3>
-				<em>You may download grant documents by clicking "download" links below. The use of the grants document database is strictly limited to authorized individuals and you are not permitted to share files or any embedded content with other individuals. All file downloads are logged.</em>
+				<em>You may download grant documents by clicking "download" links below. The use of the grants document database is strictly limited to authorized individuals, and you are not permitted to share files or any embedded content with other individuals. All file downloads are logged.</em>
 				<hr/>
 			</div>
 
@@ -131,9 +154,8 @@ ksort($columnOrders);
 						
 						$url = $module->getUrl("src/download.php?p=$grantsProjectId&id=" .
 							$row['grants_file'] . "&s=&page=register_grants&record=" . $row['record_id'] . "&event_id=" .
-							$eventId . "&field_name=grants_file");
+							$eventId . "&field_name=grants_file", true);
 						$row['download'] = "<a href='".\REDCap::escapeHtml($url)."'>Download</a>";
-						$row['award_option_value'] = $awardOptionValues[$id];
 
 						echo "<tr>";
 							foreach ($columnOrders as $column) {
@@ -152,32 +174,22 @@ ksort($columnOrders);
 		</div>
 		<script>
 		(function($, window, document) {
+			
 			function createOption(option, column) {
 				return {
 					label: option,
-					value: function(rowData, rowIdx) {return rowData[column].includes(`--${option}--`);}
+					value: function(rowData, rowIdx) {
+						return rowData[column].includes(option);
+					}
 				}
 			}
+			
 			function createPane(options, column, header) {
 				return {
 					header: header,
 					options: options.map(option => createOption(option, column))
 				}
 			}
-			let awardOptions = <?php 
-				echo '[';
-				foreach ($awardOptions as $awardOption) {
-					echo '"'.$awardOption.'",';
-				}
-				echo ']'; ?>;
-			let awardOptionValues = <?php
-				echo '[';
-				foreach ($awardOptionValues as $awardOptionValue) {
-					echo '"'.$awardOptionValue.'",';
-				}
-				echo ']'; ?>;
-			let awardOptionsCombined = awardOptionValues.reduce((acc, val)=> acc+val, "");
-			let awardOptionDropdownValues = awardOptions.filter(option => awardOptionsCombined.includes(`--${option}--`));
 
 			let columns = <?php
 				echo '[';
@@ -193,9 +205,24 @@ ksort($columnOrders);
 				}
 				echo ']';
 			?>;
+
+			let grantSections = <?php
+				echo '[';
+				foreach($grantsChoices["grant_sections"] as $grantSection) {
+					echo '"' . $grantSection . '",';
+				}
+				echo ']';
+			?>;
+			console.log(grantSections);
+
 			columns = columns.map(function(column) {
-				if (column.field === "award_option_value") {
-					column.render = function(data,type,row) {if (type === 'display') {return data.replace(/--/g, ', ').replace(/^(, )(, )*|(, )*(, )$/g, '');}return data;};
+				if (column.field === "project_terms") {
+					column.render = function(data,type,row) {
+						if (type === 'display') {
+							return data.replace(/,/g, '<br>');
+						}
+						return data;
+					};
 				}
 				if (column.visible === "" || column.visible === "false" || column.visible == 0) {
 					column.visible = false;
@@ -220,7 +247,7 @@ ksort($columnOrders);
 							config: {
 								cascadePanes: true,
 								panes: [
-									createPane(awardOptions, "awardOption", 'Award Option')
+									createPane(grantSections, "grantSections", 'Grant Section')
 								]
 							}
 							
@@ -229,19 +256,18 @@ ksort($columnOrders);
 							extend: 'searchBuilder',
 							config: {
 								conditions: {
-									awardOption: {
+									grantSections: {
 										contains: {
 											conditionName: 'Contains',
 											init: function (that, fn, preDefined = null) {
 												let el = $('<select/>').on('input', function() { fn(that, this) });
-												awardOptionDropdownValues.forEach(option => {
+												grantSections.forEach(option => {
 													el[0].options.add($(`<option value="${option}" label="${option}"></option`)[0]);
 												});
-
-												if (preDefined !== null) {
+												// If there is a preDefined value then add it
+												if (preDefined !== null && preDefined.length > 0) {
 													$(el).val(preDefined[0]);
 												}
-
 												return el;
 											},
 											inputValue: function (el) {
@@ -251,8 +277,7 @@ ksort($columnOrders);
 												return $(el[0]).val().length !== 0;
 											},
 											search: function(value, comparison) {
-												console.log('value:', value, '; comparison: ', comparison );
-												return value.includes(`--${comparison}--`);
+												return value.includes(comparison);
 											}
 										}
 									}

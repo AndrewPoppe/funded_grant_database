@@ -111,14 +111,14 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
         $this->get_metadata("user", $userProjectId);
 
         // Make sure grants project has requisite fields
-        $grantTestFields = array('grants_pi', 'grants_title', 'grants_type', 'grants_date', 'grants_number', 'grants_department', 'grants_thesaurus');
+        $grantTestFields = array('pi_fname', 'pi_lname', 'grants_title', 'nih_funding_type', 'grant_award_date', 'grants_number', 'pi_department', 'project_terms');
         if (!$this->verifyProjectMetadata($this->configuration["projects"]["grants"]["metadata"], $grantTestFields)) {
             die('The project (PID#'.$grantsProjectId.') is not a valid grants project. Contact your REDCap Administrator.');
         }
 
 
         // Make sure user project has requisite fields
-        $userTestFields = array('user_id', 'user_expiration', 'user_role');
+        $userTestFields = array('netid', 'user_expiration', 'user_role');
         if (!$this->verifyProjectMetadata($this->configuration["projects"]["user"]["metadata"], $userTestFields)) {
             die ('The project (PID#'.$userProjectId.') is not a valid users project. Contact your REDCap Administrator.');
         }
@@ -523,12 +523,13 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
             JOIN redcap_data a2
             LEFT JOIN redcap_data a3 ON (a3.project_id =a.project_id AND a3.record = a.record AND a3.field_name = 'user_expiration')
             WHERE a.project_id = ?
-                AND a.field_name = 'user_id'
+                AND a.field_name = 'netid'
                 AND a.value = ?
                 AND a2.project_id = a.project_id
                 AND a2.record = a.record
                 AND a2.field_name = 'user_role'
                 AND (a3.value IS NULL OR a3.value > ?)";
+
         return $this->query($sql, [$userProjectId, $userid, $timestamp]);   
     }
 
@@ -934,9 +935,9 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
 
         echo '<div style="padding: 7.5px; background-color: '.\REDCap::escapeHtml($accentColor).';"></div><img src="'.\REDCap::escapeHtml($logoImage).'" style="vertical-align:middle; margin-top: 7.5px;"/>
                 <hr>
-                <a href="'.$this->getUrl("src/grants.php").'">Grants</a> | ';
+                <a href="'.$this->getUrl("src/grants.php", true).'">Grants</a> | ';
         if ($role != 1) {
-            echo '<a href="'.$this->getUrl("src/statistics.php").'">Use Statistics</a> | ';
+            echo '<a href="'.$this->getUrl("src/statistics.php", true).'">Use Statistics</a> | ';
         }
         if ($role == 3) {
             echo "<a href='".APP_PATH_WEBROOT."DataEntry/record_status_dashboard.php?pid=".\REDCap::escapeHtml($grantsProjectId)."' target='_blank'>Register Grants</a> | ";

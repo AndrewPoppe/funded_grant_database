@@ -5,7 +5,7 @@
 # verify user access
 $user_id = $module->configuration["cas"]["use_cas"] ? $module->cas_authenticator->authenticate() : $userid;
 if (!$user_id or !isset($_COOKIE['grant_repo'])) {
-	header("Location: ".$module->getUrl("src/index.php"));
+	header("Location: ".$module->getUrl("src/index.php", true));
 }
 
 // set configs
@@ -17,18 +17,25 @@ $role = $module->updateRole($user_id);
 
 # make sure role is not empty
 if ($role == "") {
-	header("Location: ".$module->getUrl("src/index.php"));
+	header("Location: ".$module->getUrl("src/index.php", true));
 }
 
 // grant record id for logging purposes
 if (!isset($_GET['record'])) die('No Grant Identified');
 $grant = $_GET['record'];
 
+// get grant info for logging purposes
+$grantData = json_decode(\REDCap::getData(array(
+	'project_id'=>$grantsProjectId, 
+	'filterLogic'=>"[record_id] = $grant",
+	"return_format"=>"json"
+)), true)[0];
+
 // log this download (accessing this page counts)
-\REDCap::logEvent("Download uploaded document", "Funded Grant Database", NULL, $grant, NULL, $grantsProjectId);
+\REDCap::logEvent("Download uploaded document", "Funded Grant Database ($user_id)", NULL, $grant, NULL, $grantsProjectId);
 
 // log visit
-$module->log("Visited Download Page", array("project_id"=>$grantsProjectId, "record"=>$grant, "user"=>$user_id, "role"=>$role));
+$module->log("Visited Download Page", array("project_id"=>$grantsProjectId, "record"=>$grant, "user"=>$user_id, "role"=>$role, "pi_netid"=>$grantData["pi_netid"]));
 
 // If ID is not in query_string, then return error
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) exit("{$lang['global_01']}!");
@@ -112,7 +119,7 @@ function inspectDir($dir) {
 			echo "<h1>All Files (".count($files).")</h1>\n";
 			foreach ($files as $filename) {
 				$truncFilename = truncateFile($filename);
-				echo "<p><a href='".\REDCap::escapeHtml($module->getUrl("src/downloadFile.php?f=".urlencode($truncFilename)))."'>".\REDCap::escapeHtml(basename($filename))."</a></p>\n";
+				echo "<p><a href='".\REDCap::escapeHtml($module->getUrl("src/downloadFile.php?f=".urlencode($truncFilename), true))."'>".\REDCap::escapeHtml(basename($filename))."</a></p>\n";
 			}
 			exit();
 		} else {

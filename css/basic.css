@@ -1,38 +1,82 @@
-body { font-family: 'Avenir Next Regular', Arial, Helvetica, sans-serif; }
-td { font-family: 'Adobe Caslon Pro', 'Avenir Next LT Pro', 'Times New Roman', Times, serif; }
-table { border-collapse: collapse; }
-table.dataTable tbody tr.even { background-color: #f2f2f2; } 
-button.dt-button { padding: .1em .2em; }
-table.dataTable tr.dtrg-group.dtrg-level-0 td { 
+body {
+    font-family: 'Avenir Next Regular', Arial, Helvetica, sans-serif;
+}
+
+td {
+    font-family: 'Adobe Caslon Pro', 'Avenir Next LT Pro', 'Times New Roman', Times, serif;
+}
+
+table {
+    border-collapse: collapse;
+}
+
+table.dataTable tbody tr.even {
+    background-color: #f2f2f2;
+}
+
+button.dt-button {
+    padding: .1em .2em;
+}
+
+table.dataTable tr.dtrg-group.dtrg-level-0 td {
     background-color: #00356b;
     color: #f9f9f9;
 }
-table.dataTable tr.dtrg-group.dtrg-level-1 td { 
+
+table.dataTable tr.dtrg-group.dtrg-level-1 td {
     background-color: #ccc;
-    font-weight: bold; 
+    font-weight: bold;
 }
+
 div.dt-buttons {
     margin-left: 10px;
 }
+
 div.dtsp-panesContainer {
-	width: auto;
+    width: auto;
 }
+
 div.dtsp-panesContainer tr {
     background-color: #fff !important;
 }
+
 div.dtsp-panesContainer tr.selected {
     background-color: #809ab5 !important;
 }
+
 div.dtsp-panesContainer tr:hover {
     background-color: #aaa !important;
     cursor: pointer;
 }
+
 div.dtsp-panesContainer tr.selected:hover {
     background-color: #406890 !important;
     cursor: pointer;
 }
-div.dataTableParentHidden { overflow:hidden; height:0px; width:100%; }
-div.ui-draggable { cursor: move; cursor: grab; cursor: -moz-grab; cursor: -webkit-grab; }
-div.ui-draggable-dragging { cursor: grabbing; cursor: -moz-grabbing; cursor: -webkit-grabbing; }
-div.dtsb-searchBuilder { cursor: inherit; }
-div.dtsb-searchBuilder select { cursor: pointer; }
+
+div.dataTableParentHidden {
+    overflow: hidden;
+    height: 0px;
+    width: 100%;
+}
+
+div.ui-draggable {
+    cursor: move;
+    cursor: grab;
+    cursor: -moz-grab;
+    cursor: -webkit-grab;
+}
+
+div.ui-draggable-dragging {
+    cursor: grabbing;
+    cursor: -moz-grabbing;
+    cursor: -webkit-grabbing;
+}
+
+div.dtsb-searchBuilder {
+    cursor: inherit;
+}
+
+div.dtsb-searchBuilder select {
+    cursor: pointer;
+}

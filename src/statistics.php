@@ -32,17 +32,18 @@ $grants_result = json_decode(\REDCap::getData(array(
 	"return_format"=>"json"
 )), true);
 
-# grant types
-$grant_types = $choices['grants_type'];
+# funding types
+$funding_types = $choices['nih_funding_type'];
+
 
 # create array to hold downloads
 $downloads = array();
 foreach ($grants_result as $row) {
 	$downloads[$row['record_id']]['title'] = $row['grants_title'];
 	$downloads[$row['record_id']]['number'] = $row['grants_number'];
-	$downloads[$row['record_id']]['pi'] = $row['grants_pi'];
-	$downloads[$row['record_id']]['type'] = $grant_types[$row['grants_type']];
-	$downloads[$row['record_id']]['department'] = $row['grants_department'];
+	$downloads[$row['record_id']]['pi'] = $row['pi_fname'] . " " . $row['pi_lname'];
+	$downloads[$row['record_id']]['type'] = $funding_types[$row['nih_funding_type']];
+	$downloads[$row['record_id']]['department'] = $row['pi_department'] == 99 ? $row['pi_department_other'] : $choices["pi_department"][$row['pi_department']];
 }
 
 
@@ -50,24 +51,20 @@ $user_result = json_decode(\REDCap::getData(array('project_id'=>$userProjectId, 
 
 $netIds = array();
 foreach ($user_result as $row) {
-	$netIds[$row['user_id']] = array($row['first_name'], $row['last_name']);
+	$netIds[$row['netid']] = array($row['first_name'], $row['last_name']);
 }
-$logEventTable = \REDCap::getLogEventTable($grantsProjectId);
 
-$query = $module->createQuery();
-$query->add("SELECT e.ts, e.user, e.pk 
-	FROM $logEventTable e 
-	WHERE e.project_id = ?
-	AND e.description = 'Download uploaded document'", $grantsProjectId);
+// Grab download logs 
+$SQL = "SELECT timestamp ts, user, record 
+	WHERE project_id = ? 
+	AND message = 'Visited Download Page'";
+$PARAMS = [$grantsProjectId];
+// Restrict to grants where the user is the PI if role is not admin
 if ($role == 2) {
-	$query->add("AND e.pk IN (SELECT record
-	FROM redcap_data
-	WHERE project_id = ?
-	AND field_name = 'pi_netid'
-	AND value = ?)", [$grantsProjectId, $user_id]); 
+	$SQL .= "AND pi_netid = ?";
+	array_push($PARAMS, $user_id);
 }
-$query->add("ORDER BY e.ts DESC");
-$result = $query->execute();
+$result = $module->queryLogs($SQL, $PARAMS);
 
 while ($row = $result->fetch_array()) {
 	if ($netIds[$row['user']] && $netIds[$row['user']][0]) {
@@ -79,7 +76,7 @@ while ($row = $result->fetch_array()) {
 		$username = $row['user'];
 	}
 
-	$downloads[$row['pk']]['hits'][] = array('ts' => $row['ts'], 'user' => $name, 'username' => $username);
+	$downloads[$row['record']]['hits'][] = array('ts' => $row['ts'], 'user' => $name, 'username' => $username);
 }
 ?>
 <!DOCTYPE html>
@@ -128,8 +125,8 @@ while ($row = $result->fetch_array()) {
 						<th>PI</th>
 						<th>Grant Title</th>
 						<th>Grant #</th>
-						<th>Grant Type</th>
-						<th>Grant Department</th>
+						<th>NIH Funding Type</th>
+						<th>PI Department</th>
 						<th>User</th>
 						<th>Username</th>
 						<th>Access Datetime</th>
@@ -176,19 +173,6 @@ while ($row = $result->fetch_array()) {
 							visible: false,
 							searchable: true,
 						}
-						/*{
-							targets: [2],
-							searchPanes:{
-								options:[
-									{
-										label: 'GRANT NUMBER CONTAINS 5',
-										value: function(rowData, rowIdx) {
-											return rowData[2].includes("5");
-										}
-									}
-								]
-							}
-						}*/
 					],
 					
 					//pageLength: 1000,
