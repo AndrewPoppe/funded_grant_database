@@ -497,7 +497,7 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
         $settings["cas_context"]             = $this->getSystemSetting("cas-context");
         $settings["cas_port"]                = (int) $this->getSystemSetting("cas-port");
         $cas_server_ca_cert_id               = $this->getSystemSetting("cas-server-ca-cert-pem");
-        $settings["cas_server_ca_cert_path"] = $this->getFile($cas_server_ca_cert_id);
+        $settings["cas_server_ca_cert_path"] = is_null($cas_server_ca_cert_id) ? null : $this->getFile($cas_server_ca_cert_id);
         $settings["server_force_https"]      = $this->getSystemSetting("server-force-https");
 
         $this->configuration["cas"] = $settings;

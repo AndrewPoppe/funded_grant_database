@@ -56,6 +56,25 @@ $filterLogic .= " and (([grant_visibility] = 1 and $isAdmin)";
 $filterLogic .= " or ([grant_visibility] = 2 and ($isAdmin or [pi_netid] = '". $user_id ."'))";
 $filterLogic .= " or [grant_visibility] = 3)";
 
+// Also only include grants under these conditions
+// If User is not admin, then [user_restrict_funding_type] setting includes the grant type
+// TODO: Clean this up...
+$fundingTypeUserAccess = json_decode(\REDCap::getData(array(
+	"project_id"=>$userProjectId,
+	"return_format"=>"json",
+	"combine_checkbox_values"=>true,
+	"exportAsLabels"=>false,
+	"fields"=>"user_restrict_funding_type",
+	"filterLogic"=>"[netid]='".$user_id."'")),true)[0]['user_restrict_funding_type'];
+$fundingTypeUserAccessFilterLogic = " and (".
+	implode(" or ", array_map(function($value) {
+		$letter = $value[0];
+		return "starts_with([nih_funding_type],'".$letter."')";
+	}, explode(',', $fundingTypeUserAccess))).
+	")";
+$fundingTypeUserAccessFilterLogic = is_null($fundingTypeUserAccess) ? " and false" : $fundingTypeUserAccessFilterLogic;
+$filterLogic .= $role == 3 ? "" : $fundingTypeUserAccessFilterLogic;
+
 
 $grants = json_decode(\REDCap::getData(array(
 	"project_id"=>$grantsProjectId, 
