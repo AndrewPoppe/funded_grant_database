@@ -27,6 +27,10 @@ All configuration occurs in the system settings (Control Center -> External Modu
 
 A complete listing of the configuration options:
 
+___
+
+#### Core Functionality Settings
+
 * **Grants Project**: The PID of the grants project (see about section above)
 * **Users Project**: same
 * **Contact Person**: Name of the person who should be contacted by users who want access to the database and/or have questions about it
@@ -42,6 +46,9 @@ A complete listing of the configuration options:
         * `[database-title]`: Name of the database. (system setting described below)
         * `[contact-name]`: Contact Person, described above
         * `[contact-email]`: Contact Person's Email, described above
+___
+
+#### Aesthetics / Customization Settings
 * **Accent Color**: Main accent color (These and other aesthetic settings have decidedly Yale-centric default values)
 * **Accent Text Color**: Text color used when appearing on top of Accent Color
 * **Secondary Accent Color**: Used in highlighting certain table features, etc.
@@ -55,6 +62,17 @@ A complete listing of the configuration options:
         * **Table Header Label**: The text that should appear as the header in the grants table
         * **Field Visibility**: Whether or not the column should be visible by default - all custom columns are searchable
         * **Column Index**: The 0-indexed position the custom column should appear. *Note that this refers to the absolute position, not necessarily the apparent position. Meaning, if `5` is given for this value but columns 3 and 4 are hidden, then the custom column will appear as the 4th column (index 3)*
+___
+
+#### CAS Settings
+
+* **Use CAS Login**: Whether to use Central Authentication Service ([CAS](https://en.wikipedia.org/wiki/Central_Authentication_Service))
+* **CAS Host**: Full Hostname of your CAS Server (e.g., `secure.its.yale.edu`)
+* **CAS Context**: Context of the CAS Server (e.g., `/cas`)
+* **CAS Port**: Port of your CAS server (e.g., `443`)
+* **CAS Server CA Cert File**: The PEM file containing your CAS server's cert (e.g., [cacert.pem](https://curl.se/docs/caextract.html))
+
+___
 
 ### Default Email Body Text
 
