@@ -333,7 +333,7 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule {
         $logoFile       = $this->getSystemSetting("logo");
         $favicon        = $this->getSystemSetting("favicon");
 
-        $logoImage      = is_null($logoFile) ? $this->getModulePath() . "img/yu.png" : $this->getFile($logoFile);
+        $logoImage      = is_null($logoFile) ? $this->getModulePath() . "img/ysm.jpg" : $this->getFile($logoFile);
         $faviconImage   = is_null($favicon) ? $this->getModulePath() . "img/favicon.ico" : $this->getFile($favicon);
 
         $logoImage = $this->moveFile($logoImage);
