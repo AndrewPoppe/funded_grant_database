@@ -97,13 +97,13 @@ $grants = array_map(function($record) {
 $defaultColumns = array(
 	array("label"=>"PI", 				"field"=>"pi", 				 		"visible"=>true,	"default"=>true, "data"=>"pi"),
 	array("label"=>"Grant Title", 		"field"=>"grants_title", 	 		"visible"=>true,	"default"=>true, "data"=>"title"),
-	array("label"=>"Department", 		"field"=>"pi_department", 	 		"visible"=>true,	"default"=>true, "data"=>"department"),
+	array("label"=>"Department", 		"field"=>"pi_department", 	 		"visible"=>false,	"default"=>true, "data"=>"department"),
 	array("label"=>"Funding Agency", 	"field"=>"funding_agency",   		"visible"=>true,	"default"=>true, "data"=>"fundingAgency"),
 	array("label"=>"Research Type", 	"field"=>"research_type",	 		"visible"=>true,	"default"=>true, "data"=>"researchType"),
 	array("label"=>"Abstract",		 	"field"=>"grants_abstract",	 		"visible"=>true,	"default"=>true, "data"=>"abstract"),
 	array("label"=>"Project Terms", 	"field"=>"project_terms", 	 		"visible"=>true,	"default"=>true, "data"=>"terms"),
-	array("label"=>"Human Subjects", 	"field"=>"human_subjects_yn",		"visible"=>true,	"default"=>true, "data"=>"humanSubjects"),
-	array("label"=>"Vertebrate Animals","field"=>"vertebrate_animals_yn",	"visible"=>true,	"default"=>true, "data"=>"animals"),
+	array("label"=>"Human Subjects", 	"field"=>"human_subjects_yn",		"visible"=>false,	"default"=>true, "data"=>"humanSubjects"),
+	array("label"=>"Vertebrate Animals","field"=>"vertebrate_animals_yn",	"visible"=>false,	"default"=>true, "data"=>"animals"),
 	array("label"=>"NIH Submission #",	"field"=>"nih_submission_number",	"visible"=>true,	"default"=>true, "data"=>"submissionNumber"),
 	array("label"=>"NIH Funding Type", 	"field"=>"nih_funding_type", 		"visible"=>true,	"default"=>true, "data"=>"fundingType"),
 	array("label"=>"Grant Award Date", 	"field"=>"grant_award_date", 		"visible"=>true,	"default"=>true, "data"=>"date"),
@@ -152,6 +152,7 @@ ksort($columnOrders);
 				<?php $module->createHeaderAndTaskBar($role);?>
 				<h3><?php echo \REDCap::escapeHtml($module->configuration["text"]["databaseTitle"]) ?></h3>
 				<em>You may download grant documents by clicking "download" links below. The use of the grants document database is strictly limited to authorized individuals, and you are not permitted to share files or any embedded content with other individuals. All file downloads are logged.</em>
+				<p style="font-size:small;">If you have comments, questions, or concerns, please reach out to <a href="mailto:opssd@yale.edu">opssd@yale.edu</a>.</p>
 				<hr/>
 			</div>
 
@@ -232,10 +233,9 @@ ksort($columnOrders);
 				}
 				echo ']';
 			?>;
-			console.log(grantSections);
-
+			
 			columns = columns.map(function(column) {
-				if (column.field === "project_terms") {
+				if (["grant_sections", "project_terms"].includes(column.field)) {
 					column.render = function(data,type,row) {
 						if (type === 'display') {
 							return data.replace(/,/g, '<br>');
@@ -248,6 +248,7 @@ ksort($columnOrders);
 				} else {
 					column.visible = true;
 				}
+
 				return column;
 			});
 				
@@ -325,7 +326,8 @@ ksort($columnOrders);
 							exportOptions: { columns: ':visible' }
 						}
 						<?php } ?>
-					]
+					],
+					fixedColumns: false
 				});
 
 				$('#grants').removeClass('dataTableParentHidden');
