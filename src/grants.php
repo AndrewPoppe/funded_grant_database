@@ -100,13 +100,13 @@ $defaultColumns = array(
 	array("label"=>"Department", 		"field"=>"pi_department", 	 		"visible"=>false,	"default"=>true, "data"=>"department"),
 	array("label"=>"Funding Agency", 	"field"=>"funding_agency",   		"visible"=>true,	"default"=>true, "data"=>"fundingAgency"),
 	array("label"=>"Research Type", 	"field"=>"research_type",	 		"visible"=>true,	"default"=>true, "data"=>"researchType"),
-	array("label"=>"Abstract",		 	"field"=>"grants_abstract",	 		"visible"=>true,	"default"=>true, "data"=>"abstract"),
+	array("label"=>"Abstract",		 	"field"=>"grants_abstract",	 		"visible"=>true,	"default"=>true, "data"=>"abstract", "className"=>"grants_abstract"),
 	array("label"=>"Project Terms", 	"field"=>"project_terms", 	 		"visible"=>true,	"default"=>true, "data"=>"terms"),
 	array("label"=>"Human Subjects", 	"field"=>"human_subjects_yn",		"visible"=>false,	"default"=>true, "data"=>"humanSubjects"),
 	array("label"=>"Vertebrate Animals","field"=>"vertebrate_animals_yn",	"visible"=>false,	"default"=>true, "data"=>"animals"),
 	array("label"=>"NIH Submission #",	"field"=>"nih_submission_number",	"visible"=>true,	"default"=>true, "data"=>"submissionNumber"),
 	array("label"=>"NIH Funding Type", 	"field"=>"nih_funding_type", 		"visible"=>true,	"default"=>true, "data"=>"fundingType"),
-	array("label"=>"Grant Award Date", 	"field"=>"grant_award_date", 		"visible"=>true,	"default"=>true, "data"=>"date"),
+	array("label"=>"Grant Award Date", 	"field"=>"grant_award_date", 		"visible"=>false,	"default"=>true, "data"=>"date"),
 	array("label"=>"Grant Sections", 	"field"=>"grant_sections", 	 		"visible"=>true,	"default"=>true, "data"=>"grantSections", 	"type"=>"grantSections"),
 	array("label"=>"Acquire", 			"field"=>"download", 		 		"visible"=>true,	"default"=>true, "data"=>"acquire", 		"searchable"=>false)	
 );
@@ -142,6 +142,10 @@ ksort($columnOrders);
 				background-color: <?php echo $module->configuration["colors"]["secondaryHoverColor"]; ?> !important;
 				color: <?php echo $module->configuration["colors"]["secondaryHoverTextColor"]; ?>;
 				cursor: pointer;
+			}
+			.grants_abstract {
+				width: 500px !important;
+				min-width: 500px !important;
 			}
 		</style>	
 	</head>
@@ -238,7 +242,7 @@ ksort($columnOrders);
 				if (["grant_sections", "project_terms"].includes(column.field)) {
 					column.render = function(data,type,row) {
 						if (type === 'display') {
-							return data.replace(/,/g, '<br>');
+							return data.replace(/[,]/g, '<br>');
 						}
 						return data;
 					};
@@ -327,7 +331,11 @@ ksort($columnOrders);
 						}
 						<?php } ?>
 					],
-					fixedColumns: false
+					scrollX: true,
+					scrollY: 500,
+					scrollCollapse: true,
+					//fixedColumns: true,
+					//autoWidth: false
 				});
 
 				$('#grants').removeClass('dataTableParentHidden');
