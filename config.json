@@ -12,18 +12,18 @@
     "permissions": [
         "redcap_module_save_configuration"
     ],
-    "framework-version": 5,
+    "framework-version": 9,
     "links": {
         "project": [
             {
-                "name":"Funded Grant Database",
+                "name": "Funded Grant Database",
                 "icon": "fas fa-database",
                 "url": "src/grants.php?NOAUTH"
             }
         ],
         "control-center": [
             {
-                "name":"Funded Grant Database",
+                "name": "Funded Grant Database",
                 "icon": "fas fa-database",
                 "url": "src/index.php?NOAUTH"
             }
@@ -202,8 +202,6 @@
                     "required": false,
                     "type": "text"
                 }
-                
-                
             ]
         },
         {
@@ -273,7 +271,7 @@
         }
     ],
     "compatibility": {
-        "redcap-version-min": "9.10.0",
+        "redcap-version-min": "12.0.8",
         "redcap-version-max": ""
     }
 }
