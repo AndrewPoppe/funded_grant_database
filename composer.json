@@ -1,5 +1,10 @@
 {
     "require": {
-        "jasig/phpcas" : "*"
+        "jasig/phpcas": "*"
+    },
+    "config": {
+        "platform": {
+            "php": "7.2.5"
+        }
     }
 }
