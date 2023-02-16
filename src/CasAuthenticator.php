@@ -7,9 +7,17 @@ namespace YaleREDCap\FundedGrantDatabase;
  * 
  * @author Andrew Poppe
  */
-class CasAuthenticator {
+class CasAuthenticator
+{
 
-    public function __construct(array $settings) {
+    public $cas_host;
+    public $cas_context;
+    public $cas_port;
+    public $cas_server_ca_cert_path;
+    public $server_force_https;
+
+    public function __construct(array $settings)
+    {
         $this->cas_host = $settings["cas_host"];
         $this->cas_context = $settings["cas_context"];
         $this->cas_port = $settings["cas_port"];
@@ -22,9 +30,10 @@ class CasAuthenticator {
      * 
      * @return string|boolean username of authenticated user (false if not authenticated)
      */
-    public function authenticate() {
+    public function authenticate()
+    {
 
-        require_once __DIR__.'/../vendor/jasig/phpcas/CAS.php';
+        require_once __DIR__ . '/../vendor/jasig/phpcas/CAS.php';
 
         // Enable https fix
         if ($this->server_force_https == 1) {
@@ -33,7 +42,7 @@ class CasAuthenticator {
             $_SERVER['HTTPS'] = 'on';
             $_SERVER['SERVER_PORT'] = 443;
         }
-        
+
         // Initialize phpCAS
         \phpCAS::client(CAS_VERSION_2_0, $this->cas_host, $this->cas_port, $this->cas_context);
 
@@ -45,6 +54,6 @@ class CasAuthenticator {
         \phpCAS::forceAuthentication();
 
         // get authenticated username
-        return \phpCAS::isAuthenticated() ? \phpCAS::getUser() : FALSE; 
+        return \phpCAS::isAuthenticated() ? \phpCAS::getUser() : FALSE;
     }
 }
