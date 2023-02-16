@@ -506,6 +506,7 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule
         $cas_server_ca_cert_id               = $this->getSystemSetting("cas-server-ca-cert-pem");
         $settings["cas_server_ca_cert_path"] = is_null($cas_server_ca_cert_id) ? null : $this->getFile($cas_server_ca_cert_id);
         $settings["server_force_https"]      = $this->getSystemSetting("server-force-https");
+        $settings["service_base_url"]        = APP_PATH_WEBROOT_FULL;
 
         $this->configuration["cas"] = $settings;
     }

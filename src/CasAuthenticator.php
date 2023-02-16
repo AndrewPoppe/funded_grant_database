@@ -15,6 +15,7 @@ class CasAuthenticator
     public $cas_port;
     public $cas_server_ca_cert_path;
     public $server_force_https;
+    public $service_base_url;
 
     public function __construct(array $settings)
     {
@@ -23,6 +24,7 @@ class CasAuthenticator
         $this->cas_port = $settings["cas_port"];
         $this->cas_server_ca_cert_path = $settings["cas_server_ca_cert_path"];
         $this->server_force_https = $settings["server_force_https"];
+        $this->service_base_url = $settings["service_base_url"];
     }
 
     /**
@@ -44,7 +46,7 @@ class CasAuthenticator
         }
 
         // Initialize phpCAS
-        \phpCAS::client(CAS_VERSION_2_0, $this->cas_host, $this->cas_port, $this->cas_context);
+        \phpCAS::client(CAS_VERSION_2_0, $this->cas_host, $this->cas_port, $this->cas_context, $this->service_base_url);
 
         // Set the CA certificate that is the issuer of the cert
         // on the CAS server
