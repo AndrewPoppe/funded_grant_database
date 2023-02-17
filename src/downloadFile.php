@@ -1,5 +1,7 @@
 <?php
 
+namespace YaleREDCap\FundedGrantDatabase;
+
 /** Authors: Jon Scherdin, Andrew Poppe */
 
 # verify user access

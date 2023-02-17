@@ -1,5 +1,7 @@
 <?php
 
+namespace YaleREDCap\FundedGrantDatabase;
+
 /** Authors: Jon Scherdin, Andrew Poppe */
 
 $use_noauth = $module->configuration["cas"]["use_cas"];

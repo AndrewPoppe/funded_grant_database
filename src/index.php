@@ -1,5 +1,7 @@
 <?php
 
+namespace YaleREDCap\FundedGrantDatabase;
+
 /** Authors: Jon Scherdin, Scott Pearson, Andrew Poppe */
 
 $timestamp = date('Y-m-d');
