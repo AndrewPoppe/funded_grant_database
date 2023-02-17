@@ -371,7 +371,7 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule
 
     private function getImageFromDocId($docId)
     {
-        $file_contents = \REDCap::getFile($docId);
+        $file_contents = method_exists("REDCap", "getFile") ? \REDCap::getFile($docId) : \Files::getEdocContentsAttributes($docId);
         $imageData = base64_encode($file_contents[2]);
         $src = 'data: ' . $file_contents[0] . ';base64,' . $imageData;
         return $src;

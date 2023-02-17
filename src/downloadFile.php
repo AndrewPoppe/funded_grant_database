@@ -21,7 +21,7 @@ if (empty($this_file)) {
 	die("NO FILE FOUND");
 }
 
-list($mime_type, $filename, $file_contents) = \REDCap::getFile($doc_id);
+list($mime_type, $filename, $file_contents) = method_exists("REDCap", "getFile") ? \REDCap::getFile($doc_id) : \Files::getEdocContentsAttributes($doc_id);
 $tmpfile = tmpfile();
 $tmpfile_path = stream_get_meta_data($tmpfile)['uri'];
 file_put_contents($tmpfile_path, $file_contents);

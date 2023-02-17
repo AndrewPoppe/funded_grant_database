@@ -61,6 +61,7 @@ if (isset($_POST['submit'])) {
             </ul>
             <form method="post">
                 <input type="submit" value="I agree to all terms above" name="submit" style="cursor: pointer;">
+                <input type="text" name="redcap_csrf_token" value="<?= $module->getCSRFToken(); ?>" hidden>
             </form>
         <?php } else { ?>
             <span>

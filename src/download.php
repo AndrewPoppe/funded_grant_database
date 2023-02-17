@@ -58,7 +58,8 @@ $result = $module->query("select * from redcap_edocs_metadata where project_id =
 $this_file = $result->fetch_assoc();
 $docId = $this_file['doc_id'];
 $storedName = $this_file['stored_name'];
-list($mime_type, $filename, $file_contents) = \REDCap::getFile($docId);
+list($mime_type, $filename, $file_contents) = method_exists("REDCap", "getFile") ? \REDCap::getFile($docId) : \Files::getEdocContentsAttributes($docId);
+
 $tmpfile = tmpfile();
 $tmpfile_path = stream_get_meta_data($tmpfile)['uri'];
 file_put_contents($tmpfile_path, $file_contents);
