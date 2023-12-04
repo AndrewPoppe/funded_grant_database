@@ -2,6 +2,7 @@
 
 namespace YaleREDCap\FundedGrantDatabase;
 
+require_once "src/CasAuthenticator.php";
 /**
  * Main EM class
  * 
@@ -18,23 +19,6 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule
     public $configuration;
     public $cas_authenticator;
 
-    /**
-     * Hook for when module configs are saved.
-     * 
-     * @param mixed $project_id
-     * 
-     * @return void
-     */
-
-    public function __construct()
-    {
-        parent::__construct();
-        $this->get_config();
-        if ( $this->configuration["cas"]["use_cas"] ) {
-            require_once "src/CasAuthenticator.php";
-            $this->cas_authenticator = new CasAuthenticator($this->configuration["cas"]);
-        }
-    }
 
     /**
      * Get all configuration settings for the module.
@@ -576,6 +560,26 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule
     ###  CUSTOM FIELDS  ###
     #######################
 
+
+
+    /**
+     * Sorting function for columns.
+     * 
+     * @param array $a
+     * @param array $b
+     * 
+     * @return int
+     */
+    public function custom_field_sorter(array $a, array $b)
+    {
+        if ( $a["column-index"] > $b["column-index"] ) {
+            return -1;
+        } else {
+            return 1;
+        }
+    }
+
+
     /**
      * Creates the order for columns including custom and default
      * 
@@ -591,31 +595,15 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule
         $nTotalColumns   = $nCustomFields + $nDefaultColumns;
 
         // sort the customFields - descending
-        usort($customFields, $this->custom_field_sorter);
+        usort($customFields, function ($a, $b) {
+            return $this->custom_field_sorter($a, $b);
+        });
 
         // assign indices to columns
         $columnResults = $this->custom_field_assign_indices($customFields, $nTotalColumns);
 
         // Now add in default columns
         return $this->default_field_assign_indices($defaultColumns, $columnResults);
-    }
-
-
-    /**
-     * Sorting function for columns.
-     * 
-     * @param array $a
-     * @param array $b
-     * 
-     * @return int
-     */
-    private function custom_field_sorter(array $a, array $b)
-    {
-        if ( $a["column-index"] > $b["column-index"] ) {
-            return -1;
-        } else {
-            return 1;
-        }
     }
 
 
@@ -742,15 +730,17 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule
             if ( is_null($result[$download["user"]]) ) {
                 $result[$download["user"]] = array();
             }
-            array_push($result[$download["user"]], array(
-                "ts"           => $download["ts"],
-                "time"         => date('Y-m-d H:i:s', strtotime($download["ts"])),
-                "grant_id"     => $download["pk"],
-                "grant_number" => $grant["grants_number"],
-                "grant_title"  => $grant["grants_title"],
-                "pi"           => $grant["grants_pi"],
-                "pi_id"        => $grant["pi_netid"]
-            )
+            array_push(
+                $result[$download["user"]],
+                array(
+                    "ts"           => $download["ts"],
+                    "time"         => date('Y-m-d H:i:s', strtotime($download["ts"])),
+                    "grant_id"     => $download["pk"],
+                    "grant_number" => $grant["grants_number"],
+                    "grant_title"  => $grant["grants_title"],
+                    "pi"           => $grant["grants_pi"],
+                    "pi_id"        => $grant["pi_netid"]
+                )
             );
         }
         return $result;
@@ -832,14 +822,16 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule
             $table .= "</table>";
 
             // format the body to insert download table
-            $formattedBody = $this->formatBody($this->configuration["emailUsers"]["body"], array(
-                "[download-table]" => $table,
-                "[first-name]"     => $user["first_name"],
-                "[last-name]"      => $user["last_name"],
-                "[database-title]" => $this->configuration["text"]["databaseTitle"],
-                "[contact-name]"   => $this->configuration["contact"]["contactName"],
-                "[contact-email]"  => $this->configuration["contact"]["contactEmail"]
-            )
+            $formattedBody = $this->formatBody(
+                $this->configuration["emailUsers"]["body"],
+                array(
+                    "[download-table]" => $table,
+                    "[first-name]"     => $user["first_name"],
+                    "[last-name]"      => $user["last_name"],
+                    "[database-title]" => $this->configuration["text"]["databaseTitle"],
+                    "[contact-name]"   => $this->configuration["contact"]["contactName"],
+                    "[contact-email]"  => $this->configuration["contact"]["contactEmail"]
+                )
             );
 
             // Send the email

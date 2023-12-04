@@ -12,7 +12,7 @@
     "permissions": [
         "redcap_module_save_configuration"
     ],
-    "framework-version": 9,
+    "framework-version": 12,
     "links": {
         "project": [
             {
@@ -261,6 +261,7 @@
             }
         }
     ],
+    "enable-no-auth-logging": true,
     "crons": [
         {
             "cron_name": "email-cron",
