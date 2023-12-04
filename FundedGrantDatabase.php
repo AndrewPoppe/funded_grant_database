@@ -30,7 +30,7 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule
     {
         parent::__construct();
         $this->get_config();
-        if ($this->configuration["cas"]["use_cas"]) {
+        if ( $this->configuration["cas"]["use_cas"] ) {
             require_once "src/CasAuthenticator.php";
             $this->cas_authenticator = new CasAuthenticator($this->configuration["cas"]);
         }
@@ -51,14 +51,14 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule
             $this->get_email_config();
             $this->get_custom_field_config();
             $this->get_cas_auth_config();
-        } catch (\Throwable $e) {
-            $this->log('error getting config', ['error' => $e->getMessage()]);
+        } catch ( \Throwable $e ) {
+            $this->log('error getting config', [ 'error' => $e->getMessage() ]);
         }
     }
 
     public function redcap_module_link_check_display($project_id, $link)
     {
-        if (!$this->configuration["cas"]["use_cas"]) {
+        if ( !$this->configuration["cas"]["use_cas"] ) {
             $link["url"] = str_replace("&NOAUTH=", "", $link["url"]);
         }
         return $link;
@@ -80,31 +80,31 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule
     private function get_project_config()
     {
         try {
-            $grantsProjectId    = $this->getSystemSetting("grants-project");
-            if (!is_null($grantsProjectId)) {
+            $grantsProjectId = $this->getSystemSetting("grants-project");
+            if ( !is_null($grantsProjectId) ) {
                 $this->checkPID($grantsProjectId, 'Grants Project');
                 $this->get_metadata("grants", $grantsProjectId);
                 // Make sure grants project has requisite fields
-                $grantTestFields = array('pi_fname', 'pi_lname', 'grants_title', 'nih_funding_type', 'grant_award_date', 'grants_number', 'pi_department', 'project_terms');
-                if (!$this->verifyProjectMetadata($this->configuration["projects"]["grants"]["metadata"], $grantTestFields)) {
+                $grantTestFields = array( 'pi_fname', 'pi_lname', 'grants_title', 'nih_funding_type', 'grant_award_date', 'grants_number', 'pi_department', 'project_terms' );
+                if ( !$this->verifyProjectMetadata($this->configuration["projects"]["grants"]["metadata"], $grantTestFields) ) {
                     $this->log('The project (PID#' . $grantsProjectId . ') is not a valid grants project. Contact your REDCap Administrator.');
                 }
             }
             $this->configuration["projects"]["grants"]["projectId"] = $grantsProjectId;
 
-            $userProjectId      = $this->getSystemSetting("users-project");
-            if (!is_null($userProjectId)) {
+            $userProjectId = $this->getSystemSetting("users-project");
+            if ( !is_null($userProjectId) ) {
                 $this->checkPID($userProjectId, 'User Project');
                 $this->get_metadata("user", $userProjectId);
                 // Make sure user project has requisite fields
-                $userTestFields = array('netid', 'user_expiration', 'user_role');
-                if (!$this->verifyProjectMetadata($this->configuration["projects"]["user"]["metadata"], $userTestFields)) {
+                $userTestFields = array( 'netid', 'user_expiration', 'user_role' );
+                if ( !$this->verifyProjectMetadata($this->configuration["projects"]["user"]["metadata"], $userTestFields) ) {
                     $this->log('The project (PID#' . $userProjectId . ') is not a valid users project. Contact your REDCap Administrator.');
                 }
             }
-            $this->configuration["projects"]["user"]["projectId"]   = $userProjectId;
-        } catch (\Throwable $e) {
-            $this->log('error getting project config', ['error' => $e->getMessage()]);
+            $this->configuration["projects"]["user"]["projectId"] = $userProjectId;
+        } catch ( \Throwable $e ) {
+            $this->log('error getting project config', [ 'error' => $e->getMessage() ]);
         }
     }
 
@@ -119,27 +119,27 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule
      */
     private function checkPID(string $pid, string $label)
     {
-        if (is_null($pid)) {
+        if ( is_null($pid) ) {
             $this->log("A PID must be listed for the " . $label . " in the system settings. Contact your REDCap Administrator.");
         }
-        $sql = 'select * from redcap_projects where project_id = ?';
+        $sql    = 'select * from redcap_projects where project_id = ?';
         $result = $this->query($sql, $pid);
-        $row = $result->fetch_assoc();
-        $error = false;
-        if (is_null($row)) {
-            $error = true;
+        $row    = $result->fetch_assoc();
+        $error  = false;
+        if ( is_null($row) ) {
+            $error   = true;
             $message = "The project does not exist.";
-        } else if (!empty($row["date_deleted"])) {
-            $error = true;
+        } else if ( !empty($row["date_deleted"]) ) {
+            $error   = true;
             $message = "The project must not be deleted.";
-        } else if (!empty($row["completed_time"])) {
-            $error = true;
+        } else if ( !empty($row["completed_time"]) ) {
+            $error   = true;
             $message = "The project must not be in Completed status.";
-        } else if ($row["status"] == 2) {
-            $error = true;
+        } else if ( $row["status"] == 2 ) {
+            $error   = true;
             $message = "The project must not be in Analysis/Cleanup status.";
         }
-        if ($error) {
+        if ( $error ) {
             $this->log("<strong>There is a problem with PID" . $pid . " (" . $label . "):</strong><br>" . $message . "<br>Contact your REDCap Administrator.");
         }
     }
@@ -155,8 +155,8 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule
      */
     private function verifyProjectMetadata(array $projectFields, array $fieldsToTest)
     {
-        foreach ($fieldsToTest as $testField) {
-            if (!in_array($testField, $projectFields, true)) {
+        foreach ( $fieldsToTest as $testField ) {
+            if ( !in_array($testField, $projectFields, true) ) {
                 return false;
             }
         }
@@ -173,10 +173,10 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule
      */
     private function getFieldNames(string $pid)
     {
-        $sql = "SELECT field_name FROM redcap_metadata WHERE project_id = ?";
-        $query = $this->query($sql, $pid);
+        $sql    = "SELECT field_name FROM redcap_metadata WHERE project_id = ?";
+        $query  = $this->query($sql, $pid);
         $result = array();
-        while ($row = $query->fetch_row()) {
+        while ( $row = $query->fetch_row() ) {
             array_push($result, $row[0]);
         }
         return $result;
@@ -210,13 +210,13 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule
      */
     private function get_contact_config()
     {
-        $contactName    = $this->getSystemSetting("contact-name");
-        $contactEmail   = $this->getSystemSetting("contact-email");
-        if (is_null($contactName) | is_null($contactEmail)) {
+        $contactName  = $this->getSystemSetting("contact-name");
+        $contactEmail = $this->getSystemSetting("contact-email");
+        if ( is_null($contactName) | is_null($contactEmail) ) {
             $this->log("The contact person's information must be defined in the EM config. Contact your REDCap Administrator.");
         }
         $this->configuration["contact"] = array(
-            "name" => $contactName,
+            "name"  => $contactName,
             "email" => $contactEmail
         );
     }
@@ -233,28 +233,28 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule
      */
     private function get_color_config()
     {
-        $accentColor            = $this->getSystemSetting("accent-color");
-        $accentTextColor        = $this->getSystemSetting("text-color");
-        $secondaryAccentColor   = $this->getSystemSetting("secondary-accent-color");
-        $secondaryTextColor     = $this->getSystemSetting("secondary-text-color");
+        $accentColor          = $this->getSystemSetting("accent-color");
+        $accentTextColor      = $this->getSystemSetting("text-color");
+        $secondaryAccentColor = $this->getSystemSetting("secondary-accent-color");
+        $secondaryTextColor   = $this->getSystemSetting("secondary-text-color");
 
-        $accentColor            = is_null($accentColor) ? "#00356b" : $accentColor;
-        $accentTextColor        = is_null($accentTextColor) ? "#f9f9f9" : $accentTextColor;
-        $secondaryAccentColor   = is_null($secondaryAccentColor) ? $this->adjustBrightness($accentColor, 0.50) : $secondaryAccentColor;
-        $secondaryAccentBright  = $this->getBrightness($secondaryAccentColor);
-        $newSecondaryTextColor  = $this->adjustBrightness($accentTextColor, $secondaryAccentBright >= 0.70 ? -0.9 : 0.9);
-        $secondaryTextColor     = is_null($secondaryTextColor) ? $newSecondaryTextColor : $secondaryTextColor;
+        $accentColor           = is_null($accentColor) ? "#00356b" : $accentColor;
+        $accentTextColor       = is_null($accentTextColor) ? "#f9f9f9" : $accentTextColor;
+        $secondaryAccentColor  = is_null($secondaryAccentColor) ? $this->adjustBrightness($accentColor, 0.50) : $secondaryAccentColor;
+        $secondaryAccentBright = $this->getBrightness($secondaryAccentColor);
+        $newSecondaryTextColor = $this->adjustBrightness($accentTextColor, $secondaryAccentBright >= 0.70 ? -0.9 : 0.9);
+        $secondaryTextColor    = is_null($secondaryTextColor) ? $newSecondaryTextColor : $secondaryTextColor;
 
-        $secondaryHoverColor    = $this->adjustBrightness($secondaryAccentColor, -0.25);
+        $secondaryHoverColor     = $this->adjustBrightness($secondaryAccentColor, -0.25);
         $secondaryHoverTextColor = $this->adjustBrightness($secondaryTextColor, $this->getBrightness($secondaryHoverColor) >= 0.50 ? -0.50 : 0.50);
 
         $this->configuration["colors"] = array(
-            "accentColor"               => $accentColor,
-            "accentTextColor"           => $accentTextColor,
-            "secondaryAccentColor"      => $secondaryAccentColor,
-            "secondaryTextColor"        => $secondaryTextColor,
-            "secondaryHoverColor"       => $secondaryHoverColor,
-            "secondaryHoverTextColor"   => $secondaryHoverTextColor
+            "accentColor"             => $accentColor,
+            "accentTextColor"         => $accentTextColor,
+            "secondaryAccentColor"    => $secondaryAccentColor,
+            "secondaryTextColor"      => $secondaryTextColor,
+            "secondaryHoverColor"     => $secondaryHoverColor,
+            "secondaryHoverTextColor" => $secondaryHoverTextColor
         );
     }
 
@@ -271,15 +271,15 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule
     {
         $hexCode = ltrim($hexCode, '#');
 
-        if (strlen($hexCode) == 3) {
+        if ( strlen($hexCode) == 3 ) {
             $hexCode = $hexCode[0] . $hexCode[0] . $hexCode[1] . $hexCode[1] . $hexCode[2] . $hexCode[2];
         }
 
         $hexCode = array_map('hexdec', str_split($hexCode, 2));
 
-        foreach ($hexCode as &$color) {
+        foreach ( $hexCode as &$color ) {
             $adjustableLimit = $adjustPercent < 0 ? $color : 255 - $color;
-            $adjustAmount = ceil($adjustableLimit * $adjustPercent);
+            $adjustAmount    = ceil($adjustableLimit * $adjustPercent);
 
             $color = str_pad(dechex($color + $adjustAmount), 2, '0', STR_PAD_LEFT);
         }
@@ -297,12 +297,12 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule
     private function getBrightness(string $hexCode)
     {
         $hexCode = ltrim($hexCode, '#');
-        if (strlen($hexCode) == 3) {
+        if ( strlen($hexCode) == 3 ) {
             $hexCode = $hexCode[0] . $hexCode[0] . $hexCode[1] . $hexCode[1] . $hexCode[2] . $hexCode[2];
         }
         $hexCode = array_map('hexdec', str_split($hexCode, 2));
-        $sum = 0;
-        foreach ($hexCode as $color) {
+        $sum     = 0;
+        foreach ( $hexCode as $color ) {
             $sum += $color;
         }
         return $sum / (255 * 3);
@@ -321,27 +321,27 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule
     private function get_file_config()
     {
         try {
-            $logoFile       = $this->getSystemSetting("logo");
-            $favicon        = $this->getSystemSetting("favicon");
+            $logoFile = $this->getSystemSetting("logo");
+            $favicon  = $this->getSystemSetting("favicon");
 
-            if (is_null($logoFile)) {
+            if ( is_null($logoFile) ) {
                 $logoImage = $this->getLocalImage($this->getModulePath() . "img/ysm.jpg");
             } else {
                 $logoImage = $this->getImageFromDocId($logoFile);
             }
 
-            if (is_null($favicon)) {
+            if ( is_null($favicon) ) {
                 $faviconImage = $this->getLocalImage($this->getModulePath() . "img/favicon.ico");
             } else {
                 $faviconImage = $this->getImageFromDocId($favicon);
             }
 
             $this->configuration["files"] = array(
-                "logoImage"     => $logoImage,
-                "faviconImage"  => $faviconImage
+                "logoImage"    => $logoImage,
+                "faviconImage" => $faviconImage
             );
-        } catch (\Throwable $e) {
-            $this->log('error getting file config', ['error' => $e->getMessage()]);
+        } catch ( \Throwable $e ) {
+            $this->log('error getting file config', [ 'error' => $e->getMessage() ]);
         }
     }
 
@@ -355,7 +355,7 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule
      */
     private function getFile(string $edocId)
     {
-        $result = $this->query('SELECT stored_name FROM redcap_edocs_metadata WHERE doc_id = ?', $edocId);
+        $result   = $this->query('SELECT stored_name FROM redcap_edocs_metadata WHERE doc_id = ?', $edocId);
         $filename = $result->fetch_assoc()["stored_name"];
         return realpath(EDOC_PATH . $filename);
     }
@@ -363,17 +363,17 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule
     private function getLocalImage($path)
     {
         $file_contents = file_get_contents($path);
-        $imageData = base64_encode($file_contents);
-        $mime_type = mime_content_type($path);
-        $src = 'data: ' . $mime_type . ';base64,' . $imageData;
+        $imageData     = base64_encode($file_contents);
+        $mime_type     = mime_content_type($path);
+        $src           = 'data: ' . $mime_type . ';base64,' . $imageData;
         return $src;
     }
 
     private function getImageFromDocId($docId)
     {
         $file_contents = method_exists("REDCap", "getFile") ? \REDCap::getFile($docId) : \Files::getEdocContentsAttributes($docId);
-        $imageData = base64_encode($file_contents[2]);
-        $src = 'data: ' . $file_contents[0] . ';base64,' . $imageData;
+        $imageData     = base64_encode($file_contents[2]);
+        $src           = 'data: ' . $file_contents[0] . ';base64,' . $imageData;
         return $src;
     }
 
@@ -388,8 +388,8 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule
      */
     private function get_text_config()
     {
-        $databaseTitle  = $this->getSystemSetting("database-title");
-        $databaseTitle  = is_null($databaseTitle) ? "Yale University Funded Grant Database" : $databaseTitle;
+        $databaseTitle = $this->getSystemSetting("database-title");
+        $databaseTitle = is_null($databaseTitle) ? "Yale University Funded Grant Database" : $databaseTitle;
 
         $this->configuration["text"] = array(
             "databaseTitle" => $databaseTitle
@@ -407,23 +407,23 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule
      */
     private function get_email_config()
     {
-        $enabled  = $this->getSystemSetting('email-users');
-        $from     = $this->getSystemSetting('email-from-address');
-        $subject  = $this->getSystemSetting('email-subject');
-        $body     = $this->getSystemSetting('email-body');
+        $enabled = $this->getSystemSetting('email-users');
+        $from    = $this->getSystemSetting('email-from-address');
+        $subject = $this->getSystemSetting('email-subject');
+        $body    = $this->getSystemSetting('email-body');
 
-        if (is_null($subject)) {
+        if ( is_null($subject) ) {
             $subject = "Funded Grant Database Document Downloads";
         }
-        if (is_null($body)) {
+        if ( is_null($body) ) {
             $body = "<br>Hello [full-name],<br><br>This message is a notification that you have downloaded grant documents from the following grants using the <strong>[database-title]</strong>:<br><br>[download-table]<br><br>Questions? Contact [contact-name] (<a href=\"mailto:[contact-email]\">[contact-email]</a>)";
         }
 
         $this->configuration["emailUsers"] = array(
-            "enabled"   => $enabled,
-            "from"      => $from,
-            "subject"   => $subject,
-            "body"      => $body
+            "enabled" => $enabled,
+            "from"    => $from,
+            "subject" => $subject,
+            "body"    => $body
         );
     }
 
@@ -455,16 +455,16 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule
     {
         $result = array(
             "enabled" => $this->getSystemSetting('use-custom-fields'),
-            "fields" => array()
+            "fields"  => array()
         );
-        if (!$result["enabled"]) {
+        if ( !$result["enabled"] ) {
             return $result;
         }
-        $subSettings = array('field', 'label', 'visible', 'column-index');
+        $subSettings = array( 'field', 'label', 'visible', 'column-index' );
 
-        foreach ($subSettings as $subSetting) {
+        foreach ( $subSettings as $subSetting ) {
             $subSettingResults = $this->getSystemSetting($subSetting);
-            foreach ($subSettingResults as $key => $subSettingResult) {
+            foreach ( $subSettingResults as $key => $subSettingResult ) {
                 $result["fields"][$key][$subSetting] = $subSettingResult;
             }
         }
@@ -498,7 +498,7 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule
      */
     private function get_cas_auth_config()
     {
-        $settings = array();
+        $settings                            = array();
         $settings["use_cas"]                 = $this->getSystemSetting("use-cas-login");
         $settings["cas_host"]                = $this->getSystemSetting("cas-host");
         $settings["cas_context"]             = $this->getSystemSetting("cas-context");
@@ -528,10 +528,12 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule
     {
         try {
             $userProjectId = $this->getSystemSetting('users-project');
-            $sql = "SELECT a.value as 'userid', a2.value as 'role'
-            FROM redcap_data a
-            JOIN redcap_data a2
-            LEFT JOIN redcap_data a3 ON (a3.project_id =a.project_id AND a3.record = a.record AND a3.field_name = 'user_expiration')
+            $data_table    = method_exists('\REDCap', 'getDataTable')
+                ? \REDCap::getDataTable($userProjectId) : "redcap_data";
+            $sql           = "SELECT a.value as 'userid', a2.value as 'role'
+            FROM $data_table a
+            JOIN $data_table a2
+            LEFT JOIN $data_table a3 ON (a3.project_id =a.project_id AND a3.record = a.record AND a3.field_name = 'user_expiration')
             WHERE a.project_id = ?
                 AND a.field_name = 'netid'
                 AND a.value = ?
@@ -540,9 +542,9 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule
                 AND a2.field_name = 'user_role'
                 AND (a3.value IS NULL OR a3.value > ?)";
 
-            return $this->query($sql, [$userProjectId, $userid, $timestamp]);
-        } catch (\Throwable $e) {
-            $this->log('error authenticating', ['error' => $e->getMessage()]);
+            return $this->query($sql, [ $userProjectId, $userid, $timestamp ]);
+        } catch ( \Throwable $e ) {
+            $this->log('error authenticating', [ 'error' => $e->getMessage() ]);
         }
     }
 
@@ -561,11 +563,11 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule
     public function updateRole($userid)
     {
         $timestamp = date('Y-m-d');
-        $result = $this->authenticate($userid, $timestamp);
-        if (db_num_rows($result) > 0) {
+        $result    = $this->authenticate($userid, $timestamp);
+        if ( db_num_rows($result) > 0 ) {
             $role = intval(db_result($result, 0, 1));
         }
-        setcookie('grant_repo', $role, ["httponly" => true]);
+        setcookie('grant_repo', $role, [ "httponly" => true ]);
         return $role;
     }
 
@@ -584,9 +586,9 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule
      */
     public function getColumnOrders(array $customFields, array $defaultColumns)
     {
-        $nCustomFields = count($customFields);
+        $nCustomFields   = count($customFields);
         $nDefaultColumns = count($defaultColumns);
-        $nTotalColumns = $nCustomFields + $nDefaultColumns;
+        $nTotalColumns   = $nCustomFields + $nDefaultColumns;
 
         // sort the customFields - descending
         usort($customFields, $this->custom_field_sorter);
@@ -609,7 +611,7 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule
      */
     private function custom_field_sorter(array $a, array $b)
     {
-        if ($a["column-index"] > $b["column-index"]) {
+        if ( $a["column-index"] > $b["column-index"] ) {
             return -1;
         } else {
             return 1;
@@ -641,26 +643,26 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule
     {
         $orderResults = array();
         $takenIndices = array();
-        $higherBound = $nTotalColumns - 1;
-        $lowerBound  = 0;
+        $higherBound  = $nTotalColumns - 1;
+        $lowerBound   = 0;
         // If there are any indices greater than the total number of columns, 
         //      reassign their indices, pushing other indices lower if needed
         // This also removes "ties" in custom field indices
-        foreach ($customFields as $customField) {
-            $index = (int)$customField["column-index"];
+        foreach ( $customFields as $customField ) {
+            $index = (int) $customField["column-index"];
 
             // index is too high
-            if ($index > $higherBound) {
+            if ( $index > $higherBound ) {
                 $index = $higherBound;
                 $higherBound--;
             }
             // index is too low
-            else if ($index < $lowerBound) {
+            else if ( $index < $lowerBound ) {
                 $index = $lowerBound;
                 $lowerBound++;
             }
             // if index is taken, increment
-            while (in_array($index, $takenIndices)) {
+            while ( in_array($index, $takenIndices) ) {
                 $index++;
             }
 
@@ -670,7 +672,7 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule
         }
         return array(
             "takenIndices" => $takenIndices,
-            "columns" => $orderResults
+            "columns"      => $orderResults
         );
     }
 
@@ -686,8 +688,8 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule
     private function default_field_assign_indices(array $defaultColumns, array $columnResults)
     {
         $index = 0;
-        foreach ($defaultColumns as $defaultColumn) {
-            while (in_array($index, $columnResults["takenIndices"])) {
+        foreach ( $defaultColumns as $defaultColumn ) {
+            while ( in_array($index, $columnResults["takenIndices"]) ) {
                 $index++;
             }
 
@@ -712,7 +714,7 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule
     {
 
         $logEventTable = \REDCap::getLogEventTable($grantsProjectId);
-        $downloads = $this->query(
+        $downloads     = $this->query(
             "SELECT e.ts, e.user, e.pk 
             FROM $logEventTable e 
             WHERE e.project_id = ?
@@ -721,32 +723,35 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule
             $grantsProjectId
         );
 
-        $grants = json_decode(\REDCap::getData(array(
-            "project_id" => $grantsProjectId,
-            "return_format" => "json",
-            "combine_checkbox_values" => true,
-            "fields" => array("record_id", "grants_title", "grants_number", "grants_pi", "pi_netid"),
-            "exportAsLabels" => true
-        )), true);
+        $grants = json_decode(\REDCap::getData(
+            array(
+                "project_id"              => $grantsProjectId,
+                "return_format"           => "json",
+                "combine_checkbox_values" => true,
+                "fields"                  => array( "record_id", "grants_title", "grants_number", "grants_pi", "pi_netid" ),
+                "exportAsLabels"          => true
+            )
+        ), true);
 
         $result = array();
-        while ($download = $downloads->fetch_assoc()) {
+        while ( $download = $downloads->fetch_assoc() ) {
             $grant = $grants[array_search($download["pk"], array_column($grants, "record_id"))];
-            if ($download["user"] == $grant["pi_netid"]) {
+            if ( $download["user"] == $grant["pi_netid"] ) {
                 continue;
             }
-            if (is_null($result[$download["user"]])) {
+            if ( is_null($result[$download["user"]]) ) {
                 $result[$download["user"]] = array();
             }
             array_push($result[$download["user"]], array(
-                "ts" => $download["ts"],
-                "time" => date('Y-m-d H:i:s', strtotime($download["ts"])),
-                "grant_id" => $download["pk"],
+                "ts"           => $download["ts"],
+                "time"         => date('Y-m-d H:i:s', strtotime($download["ts"])),
+                "grant_id"     => $download["pk"],
                 "grant_number" => $grant["grants_number"],
-                "grant_title" => $grant["grants_title"],
-                "pi" => $grant["grants_pi"],
-                "pi_id" => $grant["pi_netid"]
-            ));
+                "grant_title"  => $grant["grants_title"],
+                "pi"           => $grant["grants_pi"],
+                "pi_id"        => $grant["pi_netid"]
+            )
+            );
         }
         return $result;
     }
@@ -759,12 +764,14 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule
      */
     private function get_user_info($user_id, $userProjectId)
     {
-        return json_decode(\REDCap::getData(array(
-            "project_id" => $userProjectId,
-            "return_format" => "json",
-            "records" => $user_id,
-            "fields" => array("first_name", "last_name", "email_address", "user_role")
-        )), true)[0];
+        return json_decode(\REDCap::getData(
+            array(
+                "project_id"    => $userProjectId,
+                "return_format" => "json",
+                "records"       => $user_id,
+                "fields"        => array( "first_name", "last_name", "email_address", "user_role" )
+            )
+        ), true)[0];
     }
 
 
@@ -776,7 +783,7 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule
     private function formatBody($body, $values)
     {
         $values["[full-name]"] = $values["[first-name]"] . " " . $values["[last-name]"];
-        foreach ($values as $keyword => $value) {
+        foreach ( $values as $keyword => $value ) {
             $body = str_replace($keyword, $value, $body);
         }
         return $body;
@@ -789,10 +796,10 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule
     public function send_download_emails($cronAttributes)
     {
         $grantsProjectId = $this->configuration["projects"]["grants"]["projectId"];
-        $userProjectId = $this->configuration["projects"]["user"]["projectId"];
+        $userProjectId   = $this->configuration["projects"]["user"]["projectId"];
 
         // Check if emails are enabled in EM
-        if (!$this->configuration["emailUsers"]["enabled"]) {
+        if ( !$this->configuration["emailUsers"]["enabled"] ) {
             return;
         }
 
@@ -800,24 +807,24 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule
         $allDownloads = $this->get_todays_downloads($grantsProjectId);
 
         // table columns
-        $tableColumns = ["time", "grant_number", "grant_title", "pi"];
+        $tableColumns = [ "time", "grant_number", "grant_title", "pi" ];
 
         // Loop over users
-        foreach ($allDownloads as $user_id => $userDownloads) {
+        foreach ( $allDownloads as $user_id => $userDownloads ) {
 
             // get user info
             $user = $this->get_user_info($user_id, $userProjectId);
 
             // don't bother admins with emails
-            if ($user["user_role"] == 3) {
+            if ( $user["user_role"] == 3 ) {
                 continue;
             }
 
             // create download table
             $table = "<table><tr><th>Time</th><th>Grant Number</th><th>Grant Title</th><th>PI</th></tr>";
-            foreach ($userDownloads as $download) {
+            foreach ( $userDownloads as $download ) {
                 $table .= "<tr>";
-                foreach ($tableColumns as $tableColumn) {
+                foreach ( $tableColumns as $tableColumn ) {
                     $table .= "<td>" . $download[$tableColumn] . "</td>";
                 }
                 $table .= "</tr>";
@@ -827,12 +834,13 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule
             // format the body to insert download table
             $formattedBody = $this->formatBody($this->configuration["emailUsers"]["body"], array(
                 "[download-table]" => $table,
-                "[first-name]" => $user["first_name"],
-                "[last-name]" => $user["last_name"],
+                "[first-name]"     => $user["first_name"],
+                "[last-name]"      => $user["last_name"],
                 "[database-title]" => $this->configuration["text"]["databaseTitle"],
-                "[contact-name]" => $this->configuration["contact"]["contactName"],
-                "[contact-email]" => $this->configuration["contact"]["contactEmail"]
-            ));
+                "[contact-name]"   => $this->configuration["contact"]["contactName"],
+                "[contact-email]"  => $this->configuration["contact"]["contactEmail"]
+            )
+            );
 
             // Send the email
             \REDCap::email($user["email_address"], $this->configuration["emailUsers"]["from"], $this->configuration["emailUsers"]["subject"], $formattedBody);
@@ -854,28 +862,28 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule
     public function getChoices(array $metadata)
     {
         $choicesStrs = array();
-        $multis = array("checkbox", "dropdown", "radio");
-        foreach ($metadata as $row) {
-            if (in_array($row['field_type'], $multis) && $row['select_choices_or_calculations']) {
+        $multis      = array( "checkbox", "dropdown", "radio" );
+        foreach ( $metadata as $row ) {
+            if ( in_array($row['field_type'], $multis) && $row['select_choices_or_calculations'] ) {
                 $choicesStrs[$row['field_name']] = $row['select_choices_or_calculations'];
-            } else if ($row['field_type'] == "yesno") {
+            } else if ( $row['field_type'] == "yesno" ) {
                 $choicesStrs[$row['field_name']] = "0,No|1,Yes";
-            } else if ($row['field_type'] == "truefalse") {
+            } else if ( $row['field_type'] == "truefalse" ) {
                 $choicesStrs[$row['field_name']] = "0,False|1,True";
             }
         }
         $choices = array();
-        foreach ($choicesStrs as $fieldName => $choicesStr) {
-            $choicePairs = preg_split("/\s*\|\s*/", $choicesStr);
+        foreach ( $choicesStrs as $fieldName => $choicesStr ) {
+            $choicePairs         = preg_split("/\s*\|\s*/", $choicesStr);
             $choices[$fieldName] = array();
-            foreach ($choicePairs as $pair) {
+            foreach ( $choicePairs as $pair ) {
                 $a = preg_split("/\s*,\s*/", $pair);
-                if (count($a) == 2) {
+                if ( count($a) == 2 ) {
                     $choices[$fieldName][$a[0]] = $a[1];
-                } else if (count($a) > 2) {
+                } else if ( count($a) > 2 ) {
                     $a = preg_split("/,/", $pair);
                     $b = array();
-                    for ($i = 1; $i < count($a); $i++) {
+                    for ( $i = 1; $i < count($a); $i++ ) {
                         $b[] = $a[$i];
                     }
                     $choices[$fieldName][trim($a[0])] = implode(",", $b);
@@ -896,8 +904,8 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule
      */
     public function getGrantsInstrument(array $metadata, string $fieldToTest)
     {
-        foreach ($metadata as $row) {
-            if ($row['field_name'] == $fieldToTest) {
+        foreach ( $metadata as $row ) {
+            if ( $row['field_name'] == $fieldToTest ) {
                 return $row['form_name'];
             }
         }
@@ -915,7 +923,7 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule
     public function getAllChoices(array $choices, array $fields)
     {
         $result = array();
-        foreach ($fields as $field) {
+        foreach ( $fields as $field ) {
             $result = array_merge($result, $choices[$field]);
         }
         return array_unique($result);
@@ -931,9 +939,9 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule
     public function combineValues(array $data, array $fields)
     {
         $result = array();
-        foreach ($data as $id => $row) {
+        foreach ( $data as $id => $row ) {
             $values = array();
-            foreach ($fields as $field) {
+            foreach ( $fields as $field ) {
                 $values[$field] = '--' . implode('--', explode(',', $row[$field])) . '--';
             }
             $result[$id] = implode('--', array_unique($values));
@@ -956,18 +964,18 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule
      */
     function createHeaderAndTaskBar(string $role)
     {
-        $logoImage = $this->configuration["files"]["logoImage"];
-        $accentColor = $this->configuration["colors"]["accentColor"];
+        $logoImage       = $this->configuration["files"]["logoImage"];
+        $accentColor     = $this->configuration["colors"]["accentColor"];
         $grantsProjectId = $this->configuration["projects"]["grants"]["projectId"];
-        $userProjectId = $this->configuration["projects"]["user"]["projectId"];
+        $userProjectId   = $this->configuration["projects"]["user"]["projectId"];
 
         echo '<div style="padding: 7.5px; background-color: ' . \REDCap::escapeHtml($accentColor) . ';"></div><img src="' . \REDCap::escapeHtml($logoImage) . '" style="vertical-align:middle; margin-top: 7.5px;"/>
                 <hr>
                 <a href="' . $this->getUrl("src/grants.php", true) . '">Grants</a> | ';
-        if ($role != 1) {
+        if ( $role != 1 ) {
             echo '<a href="' . $this->getUrl("src/statistics.php", true) . '">Use Statistics</a> | ';
         }
-        if ($role == 3) {
+        if ( $role == 3 ) {
             echo "<a href='" . APP_PATH_WEBROOT . "DataEntry/record_status_dashboard.php?pid=" . \REDCap::escapeHtml($grantsProjectId) . "' target='_blank'>Register Grants</a> | ";
             echo "<a href='" . APP_PATH_WEBROOT . "DataEntry/record_status_dashboard.php?pid=" . \REDCap::escapeHtml($userProjectId) . "' target='_blank'>Administer Users</a> | ";
         }
