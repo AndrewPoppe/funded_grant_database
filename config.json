@@ -9,9 +9,6 @@
             "institution": "Yale Center for Clinical Investigation"
         }
     ],
-    "permissions": [
-        "redcap_module_save_configuration"
-    ],
     "framework-version": 12,
     "links": {
         "project": [
