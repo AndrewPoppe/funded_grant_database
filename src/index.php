@@ -2,30 +2,13 @@
 
 namespace YaleREDCap\FundedGrantDatabase;
 
-// Bootstrap
-if ( empty($module->configuration) ) {
-    $module->get_config();
-    if ( $module->configuration["cas"]["use_cas"] ) {
-        $module->cas_authenticator = new CasAuthenticator($module->configuration["cas"]);
-    }
-}
-
-$timestamp  = date('Y-m-d');
-$role       = "";
-$use_noauth = $module->configuration["cas"]["use_cas"];
-$user_id    = $module->configuration["cas"]["use_cas"] ? $module->cas_authenticator->authenticate() : $userid;
+[ $user_id, $use_noauth ] = $module->get_auth_info();
 
 if ( is_null($user_id) && isset($_GET["NOAUTH"]) ) {
     header("Location: " . $module->getUrl("src/index.php", false));
 }
 
-# query table to authenticate user
-$result = $module->authenticate($user_id ?? "", $timestamp);
-
-# get role
-if ( db_num_rows($result) > 0 ) {
-    $role = intval(db_result($result, 0, 1));
-}
+$role = $module->updateRole($user_id);
 
 # log visit
 $module->log("Visited Index Page", array( "user" => $user_id, "role" => $role ));
@@ -42,7 +25,7 @@ if ( isset($_POST['submit']) ) {
 <html lang="en">
 
 <head>
-    <link rel="stylesheet" type="text/css" href="<?php echo $module->getUrl("css/basic.css") ?>">
+    <link rel="stylesheet" type="text/css" href="<?php echo $module->getUrl("css/basic.css", true) ?>">
     <link rel="shortcut icon" type="image"
         href="<?php echo \REDCap::escapeHtml($module->configuration["files"]["faviconImage"]) ?>" />
 </head>

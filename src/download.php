@@ -2,10 +2,8 @@
 
 namespace YaleREDCap\FundedGrantDatabase;
 
-$use_noauth = $module->configuration["cas"]["use_cas"];
+[ $user_id, $use_noauth ] = $module->get_auth_info();
 
-# verify user access
-$user_id = $module->configuration["cas"]["use_cas"] ? $module->cas_authenticator->authenticate() : $userid;
 if ( !$user_id || !isset($_COOKIE['grant_repo']) ) {
 	header("Location: " . $module->getUrl("src/index.php", $use_noauth));
 }
@@ -56,10 +54,10 @@ $project_id = $_GET['p'];
 
 
 // Download file from the "edocs" web server directory
-$result                                     = $module->query("select * from redcap_edocs_metadata where project_id = ? and doc_id = ?", [ $project_id, $_GET['id'] ]);
-$this_file                                  = $result->fetch_assoc();
-$docId                                      = $this_file['doc_id'];
-$storedName                                 = $this_file['stored_name'];
+$result                                       = $module->query("select * from redcap_edocs_metadata where project_id = ? and doc_id = ?", [ $project_id, $_GET['id'] ]);
+$this_file                                    = $result->fetch_assoc();
+$docId                                        = $this_file['doc_id'];
+$storedName                                   = $this_file['stored_name'];
 list( $mime_type, $filename, $file_contents ) = method_exists("REDCap", "getFile") ? \REDCap::getFile($docId) : \Files::getEdocContentsAttributes($docId);
 
 $tmpfile      = tmpfile();
@@ -107,7 +105,7 @@ if ( preg_match("/\.zip$/i", $this_file['stored_name']) || ($this_file['mime_typ
 <br />
 <div id="container" style="padding-left:8%;  padding-right:10%; margin-left:auto; margin-right:auto; ">
 	<div id="header">
-		<?php $module->createHeaderAndTaskBar($role); ?>
+		<?php $module->createHeaderAndTaskBar($role, $use_noauth); ?>
 		<h3>Download Grant Documents</h3>
 		<hr />
 	</div>

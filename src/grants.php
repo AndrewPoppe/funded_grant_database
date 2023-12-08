@@ -2,19 +2,9 @@
 
 namespace YaleREDCap\FundedGrantDatabase;
 
-// Bootstrap
-if ( empty($module->configuration) ) {
-	$module->get_config();
-	if ( $module->configuration["cas"]["use_cas"] ) {
-		$module->cas_authenticator = new CasAuthenticator($module->configuration["cas"]);
-	}
-}
+[ $user_id, $use_noauth ] = $module->get_auth_info();
 
-$use_noauth = $module->configuration["cas"]["use_cas"];
-# verify user access
-$user_id = $module->configuration["cas"]["use_cas"] ? $module->cas_authenticator->authenticate() : $userid;
 if ( !$user_id || !isset($_COOKIE['grant_repo']) ) {
-	$module->log('no user id or no cookie');
 	header("Location: " . $module->getUrl("src/index.php", $use_noauth));
 }
 
@@ -191,7 +181,7 @@ ksort($columnOrders);
 	<br />
 	<div id="container" style="padding-left:8%;  padding-right:10%; margin-left:auto; margin-right:auto; ">
 		<div id="header">
-			<?php $module->createHeaderAndTaskBar($role); ?>
+			<?php $module->createHeaderAndTaskBar($role, $use_noauth); ?>
 			<h3>
 				<?php echo \REDCap::escapeHtml($module->configuration["text"]["databaseTitle"]) ?>
 			</h3>

@@ -42,7 +42,7 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule
 
     public function redcap_module_link_check_display($project_id, $link)
     {
-        if ( !$this->configuration["cas"]["use_cas"] ) {
+        if ( !$this->getSystemSetting("use-cas-login") ) {
             $link["url"] = str_replace("&NOAUTH=", "", $link["url"]);
         }
         return $link;
@@ -954,7 +954,7 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule
      * 
      * @return void
      */
-    function createHeaderAndTaskBar(string $role)
+    function createHeaderAndTaskBar(string $role, bool $use_noauth)
     {
         $logoImage       = $this->configuration["files"]["logoImage"];
         $accentColor     = $this->configuration["colors"]["accentColor"];
@@ -963,9 +963,9 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule
 
         echo '<div style="padding: 7.5px; background-color: ' . \REDCap::escapeHtml($accentColor) . ';"></div><img src="' . \REDCap::escapeHtml($logoImage) . '" style="vertical-align:middle; margin-top: 7.5px;"/>
                 <hr>
-                <a href="' . $this->getUrl("src/grants.php", true) . '">Grants</a> | ';
+                <a href="' . $this->getUrl("src/grants.php", $use_noauth) . '">Grants</a> | ';
         if ( $role != 1 ) {
-            echo '<a href="' . $this->getUrl("src/statistics.php", true) . '">Use Statistics</a> | ';
+            echo '<a href="' . $this->getUrl("src/statistics.php", $use_noauth) . '">Use Statistics</a> | ';
         }
         if ( $role == 3 ) {
             echo "<a href='" . APP_PATH_WEBROOT . "DataEntry/record_status_dashboard.php?pid=" . \REDCap::escapeHtml($grantsProjectId) . "' target='_blank'>Register Grants</a> | ";
@@ -973,5 +973,38 @@ class FundedGrantDatabase extends \ExternalModules\AbstractExternalModule
         }
         echo '<a href ="http://projectreporter.nih.gov/reporter.cfm">NIH RePORTER</a> |
         <a href ="http://grants.nih.gov/grants/oer.htm">NIH-OER</a>';
+    }
+
+    /**
+     * Lazy load module configuration.
+     */
+    public function lazy_load_config()
+    {
+        if ( empty($this->configuration) ) {
+            $this->get_config();
+            if ( $this->configuration["cas"]["use_cas"] ) {
+                $this->cas_authenticator = new CasAuthenticator($this->configuration["cas"]);
+            }
+        }
+    }
+
+    /**
+     * Get authentication information
+     * @return array user_id and use_noauth
+     */
+    public function get_auth_info()
+    {
+        $this->lazy_load_config();
+        $use_noauth = $this->configuration["cas"]["use_cas"];
+        if ( $use_noauth ) {
+            $user_id = $this->cas_authenticator->authenticate();
+        } else {
+            try {
+                $user_id = $this->framework->getUser()->getUsername();
+            } catch ( \Throwable $e ) {
+                $user_id = null;
+            }
+        }
+        return [ $user_id, $use_noauth ];
     }
 }

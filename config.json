@@ -272,6 +272,6 @@
         "redcap-version-min": "13.1.37",
         "redcap-version-max": "",
         "php-version-min": "7.4",
-        "php-version-max": "7.99.99"
+        "php-version-max": ""
     }
 }
