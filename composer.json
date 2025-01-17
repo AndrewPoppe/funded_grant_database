@@ -1,6 +1,6 @@
 {
     "require": {
-        "jasig/phpcas": "*"
+        "apereo/phpcas": "*"
     },
     "config": {
         "platform": {

@@ -21,7 +21,7 @@ class CasAuthenticator
     {
         $this->cas_host = $settings["cas_host"];
         $this->cas_context = $settings["cas_context"];
-        $this->cas_port = $settings["cas_port"];
+        $this->cas_port = (int) $settings["cas_port"];
         $this->cas_server_ca_cert_path = $settings["cas_server_ca_cert_path"];
         $this->server_force_https = $settings["server_force_https"];
         $this->service_base_url = $settings["service_base_url"];
@@ -35,7 +35,7 @@ class CasAuthenticator
     public function authenticate()
     {
 
-        require_once __DIR__ . '/../vendor/jasig/phpcas/CAS.php';
+        require_once __DIR__ . '/../vendor/autoload.php';
 
         // Enable https fix
         if ($this->server_force_https == 1) {
