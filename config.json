@@ -9,7 +9,7 @@
             "institution": "Yale Center for Clinical Investigation"
         }
     ],
-    "framework-version": 12,
+    "framework-version": 15,
     "links": {
         "project": [
             {
@@ -269,7 +269,7 @@
         }
     ],
     "compatibility": {
-        "redcap-version-min": "13.1.37",
+        "redcap-version-min": "14.0.2",
         "redcap-version-max": "",
         "php-version-min": "7.4",
         "php-version-max": ""
