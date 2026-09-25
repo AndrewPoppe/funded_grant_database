@@ -111,6 +111,7 @@ $defaultColumns = array(
 	array( "label" => "NIH Submission #", "field" => "nih_submission_number", "visible" => true, "default" => true, "data" => "submissionNumber" ),
 	array( "label" => "NIH Funding Type", "field" => "nih_funding_type", "visible" => true, "default" => true, "data" => "fundingType" ),
 	array( "label" => "Grant Award Date", "field" => "grant_award_date", "visible" => false, "default" => true, "data" => "date" ),
+	array( "label" => "Study Section", "field" => "study_section", "visible" => false, "default" => true, "data" => "studySection" ),
 	array( "label" => "Grant Sections", "field" => "grant_sections", "visible" => true, "default" => true, "data" => "grantSections", "type" => "grantSections" ),
 	array( "label" => "Acquire", "field" => "download", "visible" => true, "default" => true, "data" => "acquire", "searchable" => false )
 );
